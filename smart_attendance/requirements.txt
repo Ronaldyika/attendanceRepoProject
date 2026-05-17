@@ -1,0 +1,10 @@
+# Smart Attendance System – Python Dependencies
+cryptography==46.0.6
+Django==6.0.5
+django-cors-headers==4.9.0
+djangorestframework==3.17.1
+djangorestframework_simplejwt==5.5.1
+drf-spectacular==0.29.0
+lazr.restfulclient==0.14.6
+pillow==12.1.1
+psycopg2-binary==2.9.12
