@@ -1,0 +1,70 @@
+name: smart_attendance
+description: >
+  Offline-Capable Smart Attendance System using QR Codes and Secure
+  Synchronisation. Master of Engineering – Computer Engineering,
+  NAHPI, University of Bamenda. Author: Buhnyuy Ronald Yika (UBa25EP188).
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  provider: ^6.1.2
+
+  # HTTP client
+  dio: ^5.4.3+1
+
+  # Local database
+  sqflite: ^2.3.3
+  path: ^1.9.0
+
+  # Secure storage (JWT tokens + device UUID)
+  flutter_secure_storage: ^9.0.0
+
+  # QR code generation (Lecturer screen)
+  qr_flutter: ^4.1.0
+
+  # QR code scanning (Student camera)
+  mobile_scanner: ^5.2.3
+
+  # Device info (UUID binding)
+  device_info_plus: ^10.1.0
+
+  # Network connectivity monitoring
+  connectivity_plus: ^6.0.3
+
+  # HMAC-SHA256 cryptography
+  crypto: ^3.0.3
+
+  # Shared preferences
+  shared_preferences: ^2.2.3
+
+  # UI / fonts
+  google_fonts: ^6.2.1
+  shimmer: ^3.0.0
+  gap: ^3.0.1
+
+  # Date formatting
+  intl: ^0.19.0
+
+  # UUID generation
+  uuid: ^4.4.0
+
+  # Icons
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
