@@ -44,7 +44,7 @@ class SessionService {
     }
   }
 
-  Future<ApiResult<SessionModel>> closeSession(String sessionId) async {
+  Future<ApiResult<bool>> closeSession(String sessionId) async {
     try {
       final resp = await _api.post('/sessions/$sessionId/close/');
       await _db.update(
@@ -53,7 +53,7 @@ class SessionService {
         where: 'id = ?',
         whereArgs: [sessionId],
       );
-      return ApiResult.success(resp.data as dynamic);
+      return const ApiResult.success(true);
     } catch (e) {
       return ApiResult.failure(e.toString());
     }
