@@ -1,11 +1,3 @@
-"""
-Smart Attendance System – Django Settings
-==========================================
-Author  : Buhnyuy Ronald Yika  (UBa25EP188)
-Project : Design and Implementation of an Offline-Capable Smart
-          Attendance System Using QR Codes and Secure Synchronisation
-Degree  : Master of Engineering – Computer Engineering, NAHPI, UBa
-"""
 
 import os
 from datetime import timedelta
@@ -40,6 +32,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -94,6 +87,7 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
