@@ -100,8 +100,41 @@ class CourseEnrolmentView(APIView):
             return Response({"detail": "Course not found."}, status=status.HTTP_404_NOT_FOUND)
 
         student_ids = request.data.get("student_ids", [])
-        course.enrolled_students.set(student_ids)
-        return Response({"message": f"Enrolment updated. {len(student_ids)} student(s) enrolled."})
+        if not isinstance(student_ids, list):
+            return Response(
+                {"student_ids": ["Expected a list of student UUIDs."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        import uuid as uuid_mod
+        from accounts.models import User
+
+        parsed_ids = []
+        for raw_id in student_ids:
+            if raw_id is None:
+                return Response(
+                    {"student_ids": ["Student IDs must not be null."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            try:
+                parsed_ids.append(uuid_mod.UUID(str(raw_id)))
+            except (ValueError, AttributeError, TypeError):
+                return Response(
+                    {"student_ids": [f"'{raw_id}' is not a valid UUID."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        students = User.objects.filter(id__in=parsed_ids, role=User.Role.STUDENT)
+        if students.count() != len(parsed_ids):
+            found = {s.id for s in students}
+            missing = [str(i) for i in parsed_ids if i not in found]
+            return Response(
+                {"student_ids": [f"Unknown or non-student user IDs: {missing}"]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        course.enrolled_students.set(students)
+        return Response({"message": f"Enrolment updated. {len(parsed_ids)} student(s) enrolled."})
 
 
 # ===========================================================================

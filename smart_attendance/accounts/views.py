@@ -114,8 +114,15 @@ class LogoutView(APIView):
         from rest_framework_simplejwt.tokens import RefreshToken
         from rest_framework_simplejwt.exceptions import TokenError
 
+        refresh = request.data.get("refresh")
+        if not refresh:
+            return Response(
+                {"refresh": ["This field is required."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
-            token = RefreshToken(request.data.get("refresh"))
+            token = RefreshToken(refresh)
             token.blacklist()
         except TokenError:
             return Response({"detail": "Token is invalid or expired."}, status=status.HTTP_400_BAD_REQUEST)

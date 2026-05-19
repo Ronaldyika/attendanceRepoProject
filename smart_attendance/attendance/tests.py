@@ -26,16 +26,16 @@ from attendance.sync_processor import process_sync_batch
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-def create_user(role, email=None, device_uuid=None):
+def create_user(role, email=None, device_uuid=None, **extra):
     email = email or f"{role}_{uuid.uuid4().hex[:6]}@test.cm"
     user = User.objects.create_user(
         email=email, password="TestPass123",
         first_name="Test", last_name=role.capitalize(),
-        role=role,
+        role=role, **extra,
     )
     if device_uuid:
         user.device_uuid = device_uuid
-        user.save()
+        user.save(update_fields=["device_uuid"])
     return user
 
 
@@ -383,3 +383,114 @@ class HealthCheckTest(TestCase):
         r = client.get(reverse("attendance:health"))
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertIn("status", r.data)
+
+
+# ---------------------------------------------------------------------------
+# 8. Full endpoint coverage (no 5xx on valid/invalid input)
+# ---------------------------------------------------------------------------
+class AllEndpointsTest(TestCase):
+    """Smoke-test every attendance endpoint; assert no 500 responses."""
+
+    def setUp(self):
+        self.admin = create_user("admin", is_staff=True)
+        self.lecturer = create_user("lecturer")
+        self.student = create_user("student", device_uuid="DEV-FULL-001")
+        self.lc = auth_client(self.lecturer)
+        self.sc = auth_client(self.student)
+        self.ac = auth_client(self.admin)
+        self.course = Course.objects.create(
+            code="CPE900", title="Full Coverage", lecturer=self.lecturer
+        )
+        self.course.enrolled_students.add(self.student)
+
+    def _assert_no_server_error(self, response, label=""):
+        self.assertLess(
+            response.status_code, 500,
+            msg=f"{label} returned {response.status_code}: {getattr(response, 'data', response.content)}",
+        )
+
+    def test_course_detail_update_delete(self):
+        r = self.lc.get(reverse("attendance:course-detail", kwargs={"pk": str(self.course.id)}))
+        self._assert_no_server_error(r, "course detail")
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+
+        r = self.lc.patch(
+            reverse("attendance:course-detail", kwargs={"pk": str(self.course.id)}),
+            {"title": "Renamed"}, format="json",
+        )
+        self._assert_no_server_error(r, "course patch")
+
+    def test_enrol_invalid_student_ids_returns_400(self):
+        r = self.lc.post(
+            reverse("attendance:course-enrol", kwargs={"pk": str(self.course.id)}),
+            {"student_ids": ["not-a-uuid"]},
+            format="json",
+        )
+        self._assert_no_server_error(r, "enrol invalid uuid")
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_enrol_unknown_student_returns_400(self):
+        r = self.lc.post(
+            reverse("attendance:course-enrol", kwargs={"pk": str(self.course.id)}),
+            {"student_ids": ["00000000-0000-0000-0000-000000000001"]},
+            format="json",
+        )
+        self._assert_no_server_error(r, "enrol unknown student")
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_session_list_and_qr_refresh(self):
+        r = self.lc.post(reverse("attendance:session-list"), {
+            "course": str(self.course.id), "venue": "Lab",
+        }, format="json")
+        self._assert_no_server_error(r, "session create")
+        session_id = r.data["id"]
+
+        r = self.lc.get(reverse("attendance:session-list"))
+        self._assert_no_server_error(r, "session list")
+
+        r = self.lc.get(reverse("attendance:session-detail", kwargs={"pk": session_id}))
+        self._assert_no_server_error(r, "session detail")
+
+        r = self.lc.get(reverse("attendance:session-qr", kwargs={"pk": session_id}))
+        self._assert_no_server_error(r, "session qr")
+
+    def test_reports_and_logs(self):
+        session = self._open_session()
+        session.status = AttendanceSession.Status.CLOSED
+        session.save(update_fields=["status"])
+
+        r = self.lc.get(reverse("attendance:session-report", kwargs={"pk": str(session.id)}))
+        self._assert_no_server_error(r, "session report")
+
+        r = self.lc.get(reverse("attendance:course-summary", kwargs={"course_id": str(self.course.id)}))
+        self._assert_no_server_error(r, "course summary")
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+
+        r = self.lc.get(reverse("attendance:record-list"))
+        self._assert_no_server_error(r, "record list")
+
+        r = self.lc.get(reverse("attendance:conflict-list"))
+        self._assert_no_server_error(r, "conflict list")
+
+        r = self.ac.get(reverse("attendance:integrity-list"))
+        self._assert_no_server_error(r, "integrity list")
+
+        r = self.lc.post(reverse("attendance:conflict-resolve", kwargs={"pk": 99999}))
+        self._assert_no_server_error(r, "conflict resolve missing")
+        self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_sync_history(self):
+        r = self.sc.get(reverse("attendance:sync-history"))
+        self._assert_no_server_error(r, "sync history")
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+
+    def _open_session(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        return AttendanceSession.objects.create(
+            course=self.course,
+            created_by=self.lecturer,
+            session_secret=generate_session_secret(),
+            expires_at=timezone.now() + timedelta(minutes=15),
+            status=AttendanceSession.Status.OPEN,
+        )

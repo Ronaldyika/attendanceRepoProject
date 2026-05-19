@@ -1,32 +1,41 @@
 """
-Custom exception handler for better error logging
+Custom exception handler for better error logging and safe client responses.
 """
 import logging
+
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework import status
+from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
 logger = logging.getLogger(__name__)
 
+
 def custom_exception_handler(exc, context):
     """
-    Custom exception handler that logs 500 errors with full context.
-    Helps identify what went wrong with registration or other endpoints.
+    Return 4xx for known validation failures; log unhandled exceptions as 500.
     """
-    # Call REST framework's default exception handler first
+    if isinstance(exc, DjangoValidationError):
+        if hasattr(exc, "message_dict"):
+            detail = exc.message_dict
+        elif hasattr(exc, "messages"):
+            detail = exc.messages
+        else:
+            detail = str(exc)
+        return Response({"detail": detail}, status=status.HTTP_400_BAD_REQUEST)
+
     response = exception_handler(exc, context)
-    
-    # Log the exception with full context
+
     if response is None:
-        # This is a 500 error (unhandled exception)
         logger.error(
-            f"Unhandled exception in {context['view'].__class__.__name__}",
+            "Unhandled exception in %s",
+            context["view"].__class__.__name__,
             exc_info=exc,
             extra={
-                'request': context['request'],
-                'view': context['view'].__class__.__name__,
-                'method': context['request'].method,
-                'path': context['request'].path,
-                'user': context['request'].user,
-            }
+                "view": context["view"].__class__.__name__,
+                "method": context["request"].method,
+                "path": context["request"].path,
+            },
         )
-    
+
     return response

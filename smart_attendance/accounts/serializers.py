@@ -97,8 +97,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             "password_confirm",
         ]
 
+    def validate_email(self, value):
+        return value.strip().lower()
+
     def validate(self, attrs):
-        if attrs["password"] != attrs.pop("password_confirm"):
+        password_confirm = attrs.pop("password_confirm", None)
+        if password_confirm is None:
+            raise serializers.ValidationError({"password_confirm": "This field is required."})
+        if attrs.get("password") != password_confirm:
             raise serializers.ValidationError({"password_confirm": "Passwords do not match."})
         return attrs
 
