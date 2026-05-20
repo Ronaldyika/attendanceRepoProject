@@ -27,16 +27,27 @@ class UserModel {
   bool get isAdmin => role == 'admin';
   bool get isDeviceBound => deviceUuid != null && deviceUuid!.isNotEmpty;
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-        id: json['id'] ?? '',
-        email: json['email'] ?? '',
-        firstName: json['first_name'] ?? '',
-        lastName: json['last_name'] ?? '',
-        registrationNumber: json['registration_number'],
-        role: json['role'] ?? 'student',
-        deviceUuid: json['device_uuid'],
-        deviceBoundAt: json['device_bound_at'],
-      );
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    var first = json['first_name']?.toString() ?? '';
+    var last = json['last_name']?.toString() ?? '';
+    if (first.isEmpty && last.isEmpty && json['full_name'] != null) {
+      final parts = (json['full_name'] as String).trim().split(RegExp(r'\s+'));
+      if (parts.isNotEmpty) {
+        first = parts.first;
+        if (parts.length > 1) last = parts.sublist(1).join(' ');
+      }
+    }
+    return UserModel(
+      id: json['id'] ?? '',
+      email: json['email'] ?? '',
+      firstName: first,
+      lastName: last,
+      registrationNumber: json['registration_number'],
+      role: json['role'] ?? 'student',
+      deviceUuid: json['device_uuid'],
+      deviceBoundAt: json['device_bound_at'],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,

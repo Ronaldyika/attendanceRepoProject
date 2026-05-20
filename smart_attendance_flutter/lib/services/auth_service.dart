@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import '../core/network/api_client.dart';
 import '../core/network/api_result.dart';
+import '../core/network/api_response_utils.dart';
 import '../core/utils/secure_storage_service.dart';
 import '../models/user_model.dart';
 
@@ -41,7 +43,7 @@ class AuthService {
   }) async {
     try {
       final resp = await _api.post('/auth/login/', data: {
-        'email': email,
+        'email': email.trim().toLowerCase(),
         'password': password,
         'device_uuid': deviceUuid,
       });
@@ -54,7 +56,7 @@ class AuthService {
       await SecureStorageService.saveUserData(user.toJsonString());
       return ApiResult.success(data);
     } catch (e) {
-      return ApiResult.failure(_parseError(e));
+      return ApiResult.failure(parseApiError(e, fallback: 'Invalid email or password.'));
     }
   }
 
@@ -69,7 +71,7 @@ class AuthService {
   }) async {
     try {
       final resp = await _api.post('/auth/register/', data: {
-        'email': email,
+        'email': email.trim().toLowerCase(),
         'first_name': firstName,
         'last_name': lastName,
         'registration_number': registrationNumber,
@@ -77,27 +79,70 @@ class AuthService {
         'password': password,
         'password_confirm': passwordConfirm,
       });
-      final user = UserModel.fromJson(
-          resp.data['user'] as Map<String, dynamic>);
+      final data = asStringMap(resp.data);
+      final userJson = data?['user'];
+      if (userJson is! Map) {
+        return const ApiResult.failure(
+          'Unexpected registration response from server.',
+        );
+      }
+      final user = UserModel.fromJson(asStringMap(userJson)!);
       return ApiResult.success(user);
     } catch (e) {
-      return ApiResult.failure(_parseError(e));
+      print('\n╔═══════════════════════════════════════════════════════╗');
+      print('║          REGISTRATION ERROR RESPONSE                 ║');
+      print('╚═══════════════════════════════════════════════════════╝');
+      print('Error Type: ${e.runtimeType}');
+      if (e is DioException) {
+        print('Status Code: ${e.response?.statusCode}');
+        print('Response Body: ${e.response?.data}');
+        print('Full Response: ${e.response?.toString()}');
+      } else {
+        print('Error Details: $e');
+      }
+      print('');
+      return ApiResult.failure(parseApiError(e));
     }
   }
 
   Future<ApiResult<UserModel>> getProfile() async {
     try {
       final resp = await _api.get('/auth/profile/');
-      return ApiResult.success(UserModel.fromJson(resp.data as Map<String, dynamic>));
+      final user = UserModel.fromJson(resp.data as Map<String, dynamic>);
+      await SecureStorageService.saveUserData(user.toJsonString());
+      return ApiResult.success(user);
     } catch (e) {
-      return ApiResult.failure(_parseError(e));
+      return ApiResult.failure(parseApiError(e));
+    }
+  }
+
+  /// Students for enrolment — use `id` (UUID), not registration numbers.
+  Future<ApiResult<List<UserModel>>> getStudents() async {
+    try {
+      final resp = await _api.get('/auth/users/', queryParams: {'role': 'student'});
+      final list = extractPaginatedList(resp.data)
+          .map((e) => UserModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return ApiResult.success(list);
+    } catch (e) {
+      return ApiResult.failure(parseApiError(e));
+    }
+  }
+
+  Future<ApiResult<Map<String, dynamic>>> checkHealth() async {
+    try {
+      final resp = await _api.get('/health/');
+      final map = asStringMap(resp.data) ?? {};
+      return ApiResult.success(map);
+    } catch (e) {
+      return ApiResult.failure(parseApiError(e, fallback: 'Server unreachable.'));
     }
   }
 
   Future<void> logout() async {
     try {
       final refresh = await SecureStorageService.getRefreshToken();
-      if (refresh != null) {
+      if (refresh != null && refresh.isNotEmpty) {
         await _api.post('/auth/logout/', data: {'refresh': refresh});
       }
     } catch (_) {}
@@ -112,16 +157,5 @@ class AuthService {
     } catch (_) {
       return null;
     }
-  }
-
-  String _parseError(dynamic e) {
-    if (e is Exception) {
-      final msg = e.toString();
-      if (msg.contains('device_uuid')) return 'This account is bound to another device.';
-      if (msg.contains('401') || msg.contains('credentials')) return 'Invalid email or password.';
-      if (msg.contains('400')) return 'Invalid request. Check your input.';
-      if (msg.contains('connection') || msg.contains('timeout')) return 'Network error. Check your connection.';
-    }
-    return 'Something went wrong. Please try again.';
   }
 }

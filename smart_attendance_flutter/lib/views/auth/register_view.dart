@@ -22,6 +22,18 @@ class _RegisterViewState extends State<RegisterView> {
   final _passwordCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
   String _role = 'student';
+  String? _serverWarning;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final warning = await context.read<AuthController>().checkServerHealth();
+      if (mounted && warning != null) {
+        setState(() => _serverWarning = warning);
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -47,19 +59,89 @@ class _RegisterViewState extends State<RegisterView> {
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Registration successful! Please login.'),
+          content: Text('✓ Registration successful! Please login.'),
           backgroundColor: AppTheme.success,
+          duration: Duration(seconds: 2),
         ),
       );
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(auth.error ?? 'Registration failed'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
+      _showErrorDialog(context, auth.error ?? 'Registration failed');
     }
+  }
+
+  void _showErrorDialog(BuildContext context, String errorMsg) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline, color: AppTheme.error, size: 28),
+            SizedBox(width: 12),
+            Text('Registration Failed', style: TextStyle(color: AppTheme.error)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.error.withOpacity(0.3)),
+                ),
+                child: SelectableText(
+                  errorMsg,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '🔍 Debug Info:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SelectableText(
+                      'Email: ${_emailCtrl.text.trim()}\n'
+                      'Registration #: ${_regNumCtrl.text.trim()}\n'
+                      'Role: $_role\n\n'
+                      'Check the terminal output for detailed error information.',
+                      style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -107,6 +189,35 @@ class _RegisterViewState extends State<RegisterView> {
                 ],
               ),
             ),
+            if (_serverWarning != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.warning.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.warning.withOpacity(0.4)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        color: AppTheme.warning, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _serverWarning!,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             // Form card
             Container(

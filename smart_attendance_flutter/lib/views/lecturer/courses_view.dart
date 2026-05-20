@@ -4,6 +4,7 @@ import '../../controllers/auth_controller.dart';
 import '../../controllers/course_controller.dart';
 import '../../core/constants/app_theme.dart';
 import '../../models/course_model.dart';
+import '../../models/user_model.dart';
 import '../shared/widgets/app_button.dart';
 import '../shared/widgets/app_text_field.dart';
 
@@ -57,7 +58,10 @@ class LecturerCoursesView extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
                   itemCount: ctrl.courses.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (_, i) => _CourseCard(course: ctrl.courses[i]),
+                  itemBuilder: (_, i) => _CourseCard(
+                        course: ctrl.courses[i],
+                        onEnrol: () => _showEnrolSheet(context, ctrl.courses[i]),
+                      ),
                 ),
     );
   }
@@ -70,11 +74,21 @@ class LecturerCoursesView extends StatelessWidget {
       builder: (_) => const _CreateCourseSheet(),
     );
   }
+
+  void _showEnrolSheet(BuildContext context, CourseModel course) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EnrolStudentsSheet(course: course),
+    );
+  }
 }
 
 class _CourseCard extends StatelessWidget {
   final CourseModel course;
-  const _CourseCard({required this.course});
+  final VoidCallback onEnrol;
+  const _CourseCard({required this.course, required this.onEnrol});
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +97,10 @@ class _CourseCard extends StatelessWidget {
     ];
     final color = colors[course.code.hashCode.abs() % colors.length];
 
-    return Container(
+    return InkWell(
+      onTap: onEnrol,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -155,6 +172,150 @@ class _CourseCard extends StatelessWidget {
                       ? AppTheme.success
                       : AppTheme.textSecondary),
             ),
+          ),
+          const Icon(Icons.person_add_outlined,
+              size: 20, color: AppTheme.textSecondary),
+        ],
+      ),
+    ),
+    );
+  }
+}
+
+class _EnrolStudentsSheet extends StatefulWidget {
+  final CourseModel course;
+  const _EnrolStudentsSheet({required this.course});
+
+  @override
+  State<_EnrolStudentsSheet> createState() => _EnrolStudentsSheetState();
+}
+
+class _EnrolStudentsSheetState extends State<_EnrolStudentsSheet> {
+  List<UserModel> _students = [];
+  final Set<String> _selected = {};
+  bool _loading = true;
+  bool _submitting = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final list = await context.read<CourseController>().loadStudents();
+    if (!mounted) return;
+    setState(() {
+      _students = list;
+      _loading = false;
+      if (list.isEmpty) _error = 'No students found.';
+    });
+  }
+
+  Future<void> _submit() async {
+    if (_selected.isEmpty) return;
+    setState(() => _submitting = true);
+    final message = await context.read<CourseController>().enrolStudents(
+          courseId: widget.course.id,
+          studentIds: _selected.toList(),
+        );
+    if (!mounted) return;
+    setState(() => _submitting = false);
+    if (message != null) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: AppTheme.success),
+      );
+    } else {
+      setState(() => _error = context.read<CourseController>().error);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Enrol students · ${widget.course.code}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const Text(
+            'Select students by account (UUID). Do not use matric numbers.',
+            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(_error!, style: const TextStyle(color: AppTheme.error)),
+          ],
+          const SizedBox(height: 12),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _students.length,
+                itemBuilder: (_, i) {
+                  final s = _students[i];
+                  final checked = _selected.contains(s.id);
+                  return CheckboxListTile(
+                    value: checked,
+                    onChanged: (v) {
+                      setState(() {
+                        if (v == true) {
+                          _selected.add(s.id);
+                        } else {
+                          _selected.remove(s.id);
+                        }
+                      });
+                    },
+                    title: Text(s.fullName),
+                    subtitle: Text(s.registrationNumber ?? s.email),
+                  );
+                },
+              ),
+            ),
+          const SizedBox(height: 12),
+          GradientButton(
+            label: 'Enrol selected (${_selected.length})',
+            onPressed: _submitting || _selected.isEmpty ? null : _submit,
+            isLoading: _submitting,
+            icon: Icons.check,
           ),
         ],
       ),

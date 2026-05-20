@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../models/course_model.dart';
+import '../models/user_model.dart';
+import '../services/auth_service.dart';
 import '../services/course_service.dart';
 
 enum CourseState { idle, loading, loaded, error }
 
 class CourseController extends ChangeNotifier {
   final _service = CourseService();
+  final _authService = AuthService();
 
   CourseState _state = CourseState.idle;
   List<CourseModel> _courses = [];
@@ -50,6 +53,31 @@ class CourseController extends ChangeNotifier {
   Future<Map<String, dynamic>?> getCourseReport(String courseId) async {
     final result = await _service.getCourseReport(courseId);
     return result.isSuccess ? result.data : null;
+  }
+
+  Future<List<UserModel>> loadStudents() async {
+    final result = await _authService.getStudents();
+    if (result.isSuccess) return result.data!;
+    _error = result.error;
+    notifyListeners();
+    return [];
+  }
+
+  Future<String?> enrolStudents({
+    required String courseId,
+    required List<String> studentIds,
+  }) async {
+    final result = await _service.enrolStudents(
+      courseId: courseId,
+      studentIds: studentIds,
+    );
+    if (result.isSuccess) {
+      await loadCourses();
+      return result.data;
+    }
+    _error = result.error;
+    notifyListeners();
+    return null;
   }
 
   void clearError() { _error = null; notifyListeners(); }

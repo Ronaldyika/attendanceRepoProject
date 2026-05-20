@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/app_constants.dart';
@@ -29,6 +28,12 @@ class ApiClient {
       },
       onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
+          final path = error.requestOptions.path;
+          if (path.contains('/auth/login') ||
+              path.contains('/auth/register') ||
+              path.contains('/auth/token/refresh')) {
+            return handler.next(error);
+          }
           final refreshed = await _refreshToken();
           if (refreshed) {
             final token = await _storage.read(key: AppConstants.kAccessToken);

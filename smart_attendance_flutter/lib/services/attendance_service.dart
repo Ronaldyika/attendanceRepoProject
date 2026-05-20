@@ -1,8 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 import '../core/database/database_helper.dart';
 import '../core/network/api_client.dart';
 import '../core/network/api_result.dart';
+import '../core/network/api_response_utils.dart';
 import '../core/utils/qr_utils.dart';
 import '../models/attendance_record_model.dart';
 import '../models/session_model.dart';
@@ -18,7 +20,7 @@ class AttendanceService {
     required String deviceUuid,
   }) async {
     try {
-      final now = DateTime.now().toIso8601String();
+      final now = DateTime.now().toUtc().toIso8601String();
       final resp = await _api.post('/attendance/scan/', data: {
         'session_id': sessionId,
         'qr_payload': qrPayload,
@@ -70,7 +72,7 @@ class AttendanceService {
     }
 
     // 3. Write to SQLite
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
     final idemKey =
         '$deviceUuid|${session.id}|${now.millisecondsSinceEpoch}';
     final id = const Uuid().v4();
@@ -152,8 +154,7 @@ class AttendanceService {
   Future<ApiResult<List<Map<String, dynamic>>>> getOnlineRecords() async {
     try {
       final resp = await _api.get('/attendance/records/');
-      final list = (resp.data as Map<String, dynamic>)['results'] as List? ??
-          resp.data as List;
+      final list = extractPaginatedList(resp.data);
       return ApiResult.success(list.cast<Map<String, dynamic>>());
     } catch (e) {
       return ApiResult.failure(e.toString());
@@ -164,18 +165,15 @@ class AttendanceService {
       records.where((r) => r.pendingSync).length;
 
   String _parseError(dynamic e) {
+    if (e is DioException) {
+      return parseApiError(
+        e,
+        fallback: 'Failed to record attendance. Please try again.',
+      );
+    }
     final msg = e.toString().toLowerCase();
     if (msg.contains('already') || msg.contains('duplicate')) {
       return 'Attendance already recorded for this session.';
-    }
-    if (msg.contains('closed') || msg.contains('expired')) {
-      return 'This session is no longer active.';
-    }
-    if (msg.contains('device')) {
-      return 'Device verification failed. Contact your administrator.';
-    }
-    if (msg.contains('hmac') || msg.contains('invalid')) {
-      return 'Invalid QR code. Please scan the code displayed by your lecturer.';
     }
     return 'Failed to record attendance. Please try again.';
   }

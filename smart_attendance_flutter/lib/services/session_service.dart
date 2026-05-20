@@ -1,5 +1,6 @@
 import '../core/network/api_client.dart';
 import '../core/network/api_result.dart';
+import '../core/network/api_response_utils.dart';
 import '../core/database/database_helper.dart';
 import '../models/session_model.dart';
 
@@ -22,14 +23,14 @@ class SessionService {
       await _cacheSession(session);
       return ApiResult.success(session);
     } catch (e) {
-      return ApiResult.failure(e.toString());
+      return ApiResult.failure(parseApiError(e));
     }
   }
 
   Future<ApiResult<List<SessionModel>>> getSessions() async {
     try {
       final resp = await _api.get('/sessions/');
-      final list = (resp.data as List)
+      final list = extractPaginatedList(resp.data)
           .map((e) => SessionModel.fromJson(e as Map<String, dynamic>))
           .toList();
       for (final s in list) {
@@ -37,16 +38,15 @@ class SessionService {
       }
       return ApiResult.success(list);
     } catch (e) {
-      // Fallback to local cache
       final cached = await _getLocalSessions();
       if (cached.isNotEmpty) return ApiResult.success(cached);
-      return ApiResult.failure(e.toString());
+      return ApiResult.failure(parseApiError(e));
     }
   }
 
   Future<ApiResult<bool>> closeSession(String sessionId) async {
     try {
-      final resp = await _api.post('/sessions/$sessionId/close/');
+      await _api.post('/sessions/$sessionId/close/');
       await _db.update(
         'attendance_sessions',
         {'status': 'closed', 'closed_at': DateTime.now().toIso8601String()},
@@ -55,7 +55,7 @@ class SessionService {
       );
       return const ApiResult.success(true);
     } catch (e) {
-      return ApiResult.failure(e.toString());
+      return ApiResult.failure(parseApiError(e));
     }
   }
 
@@ -66,7 +66,7 @@ class SessionService {
       await _cacheSession(session);
       return ApiResult.success(session);
     } catch (e) {
-      return ApiResult.failure(e.toString());
+      return ApiResult.failure(parseApiError(e));
     }
   }
 
@@ -75,7 +75,7 @@ class SessionService {
       final resp = await _api.get('/reports/sessions/$sessionId/');
       return ApiResult.success(resp.data as Map<String, dynamic>);
     } catch (e) {
-      return ApiResult.failure(e.toString());
+      return ApiResult.failure(parseApiError(e));
     }
   }
 
