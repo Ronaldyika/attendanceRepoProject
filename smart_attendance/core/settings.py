@@ -3,6 +3,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get(
@@ -60,16 +62,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "core.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.sqlite3"),
-        "NAME": os.environ.get("DB_NAME", str(BASE_DIR / "db.sqlite3")),
-        "USER": os.environ.get("DB_USER", ""),
-        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-        "HOST": os.environ.get("DB_HOST", ""),
-        "PORT": os.environ.get("DB_PORT", ""),
+# Render sets DATABASE_URL when a Postgres instance is linked to the web service.
+# Prefer that over DB_HOST=localhost, which causes "connection refused" on Render.
+_database_url = os.environ.get("DATABASE_URL")
+if _database_url:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=_database_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.sqlite3"),
+            "NAME": os.environ.get("DB_NAME", str(BASE_DIR / "db.sqlite3")),
+            "USER": os.environ.get("DB_USER", ""),
+            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+            "HOST": os.environ.get("DB_HOST", ""),
+            "PORT": os.environ.get("DB_PORT", ""),
+        }
+    }
 
 AUTH_USER_MODEL = "accounts.User"
 
