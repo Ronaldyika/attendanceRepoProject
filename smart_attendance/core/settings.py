@@ -111,6 +111,7 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "core.exception_handlers.custom_exception_handler",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",  # Fallback for testing
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -135,14 +136,58 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
     "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
     "TOKEN_OBTAIN_SERIALIZER": "accounts.serializers.CustomTokenObtainPairSerializer",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
 
-CORS_ALLOW_ALL_ORIGINS = DEBUG
-CORS_ALLOWED_ORIGINS = []
+# CORS Configuration – allow requests from mobile app and Flutter emulator
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "https://qrscanner-5qk4.onrender.com",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+] if not DEBUG else []
+
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins in DEBUG mode
+
+# Expose Authorization header so client can receive and use tokens
+CORS_EXPOSE_HEADERS = [
+    "Authorization",
+    "Content-Type",
+    "Content-Length",
+]
+
+# Allow credentials (tokens) to be sent and received
+CORS_ALLOW_CREDENTIALS = True
+
+# Allow Authorization header to be sent from client
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+    "HEAD",
+]
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Smart Attendance System API",

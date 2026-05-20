@@ -19,6 +19,21 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     1. Embed role, full_name and device_uuid in the JWT payload.
     2. Perform device binding on first login.
     3. Reject login if the supplied device_uuid differs from the bound one.
+    
+    Response format:
+    {
+        "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "user": {
+            "id": "...",
+            "email": "...",
+            "full_name": "...",
+            "role": "student",
+            "registration_number": "...",
+            "device_uuid": "...",
+            "device_bound_at": "..."
+        }
+    }
     """
 
     device_uuid = serializers.CharField(
@@ -30,6 +45,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     @classmethod
     def get_token(cls, user):
+        """Embed custom claims in the JWT token payload."""
         token = super().get_token(user)
         token["role"] = user.role
         token["full_name"] = user.get_full_name()
@@ -38,10 +54,16 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
+        """
+        Validate credentials, handle device binding, and return complete auth response.
+        """
         device_uuid = attrs.pop("device_uuid", "").strip()
+        
+        # Get tokens and base response from parent class
         data = super().validate(attrs)
         user = self.user
 
+        # Device binding logic
         if device_uuid:
             if user.device_uuid and user.device_uuid != device_uuid:
                 raise serializers.ValidationError(
@@ -64,6 +86,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                     new_device_uuid=device_uuid,
                 )
 
+        # Ensure response includes both tokens and user data
+        # data already contains 'refresh' and 'access' from parent.validate()
         data["user"] = {
             "id": str(user.id),
             "email": user.email,
@@ -75,6 +99,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 user.device_bound_at.isoformat() if user.device_bound_at else None
             ),
         }
+        
         return data
 
 
