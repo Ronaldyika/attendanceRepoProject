@@ -13,8 +13,9 @@ class AppConstants {
   static const Duration receiveTimeout = Duration(seconds: 30);
 
   // QR
-  static const int qrValiditySeconds = 900; // 15 min
-  static const int clockSkewToleranceSeconds = 300;
+  /// QR validity/refresh interval (lecturer QR regenerates on this cadence).
+  static const int qrValiditySeconds = 10;
+  static const int clockSkewToleranceSeconds = 5;
 
   // Local DB
   static const String dbName = 'smart_attendance.db';

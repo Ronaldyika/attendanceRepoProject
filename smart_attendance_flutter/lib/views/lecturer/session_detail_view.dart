@@ -61,8 +61,6 @@ class _SessionDetailViewState extends State<SessionDetailView>
       secret: session.sessionSecret!,
       validitySeconds: AppConstants.qrValiditySeconds,
     );
-    final expiry = (DateTime.now().millisecondsSinceEpoch ~/ 1000) +
-        AppConstants.qrValiditySeconds;
     setState(() => _localSecondsRemaining = AppConstants.qrValiditySeconds);
   }
 
@@ -168,7 +166,8 @@ class _SessionDetailViewState extends State<SessionDetailView>
     final ss = (_localSecondsRemaining % 60).toString().padLeft(2, '0');
     final progress =
         _localSecondsRemaining / AppConstants.qrValiditySeconds;
-    final nearExpiry = _localSecondsRemaining < 120;
+    final nearExpiry =
+        _localSecondsRemaining <= (AppConstants.qrValiditySeconds <= 10 ? 2 : 120);
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
