@@ -62,10 +62,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "core.wsgi.application"
 
-# Render sets DATABASE_URL when a Postgres instance is linked to the web service.
-# Prefer that over DB_HOST=localhost, which causes "connection refused" on Render.
+# Database configuration: Use SQLite by default, PostgreSQL only if explicitly enabled
+# To use PostgreSQL, set USE_POSTGRESQL=True in environment variables
+_use_postgresql = os.environ.get("USE_POSTGRESQL", "False") == "True"
 _database_url = os.environ.get("DATABASE_URL")
-if _database_url:
+
+if _use_postgresql and _database_url:
+    # Use PostgreSQL if explicitly enabled and DATABASE_URL is provided
     DATABASES = {
         "default": dj_database_url.config(
             default=_database_url,
@@ -74,14 +77,11 @@ if _database_url:
         )
     }
 else:
+    # Default to SQLite for production without PostgreSQL setup
     DATABASES = {
         "default": {
-            "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.sqlite3"),
-            "NAME": os.environ.get("DB_NAME", str(BASE_DIR / "db.sqlite3")),
-            "USER": os.environ.get("DB_USER", ""),
-            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-            "HOST": os.environ.get("DB_HOST", ""),
-            "PORT": os.environ.get("DB_PORT", ""),
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": str(BASE_DIR / "db.sqlite3"),
         }
     }
 
