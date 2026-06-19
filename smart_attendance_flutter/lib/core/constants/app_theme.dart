@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   AppTheme._();
@@ -48,14 +47,14 @@ class AppTheme {
         error: error,
         surface: surface,
       ),
-      textTheme: GoogleFonts.interTextTheme(),
+      textTheme: Typography.blackMountainView.apply(bodyColor: textPrimary, displayColor: textPrimary),
       scaffoldBackgroundColor: surface,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: textPrimary),
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: textPrimary,
@@ -78,7 +77,7 @@ class AppTheme {
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -87,7 +86,7 @@ class AppTheme {
           side: const BorderSide(color: primary, width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -110,8 +109,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: error, width: 1.5),
         ),
-        labelStyle: GoogleFonts.inter(color: textSecondary, fontSize: 14),
-        hintStyle: GoogleFonts.inter(color: textSecondary, fontSize: 14),
+        labelStyle: const TextStyle(color: textSecondary, fontSize: 14),
+        hintStyle: const TextStyle(color: textSecondary, fontSize: 14),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
@@ -123,7 +122,7 @@ class AppTheme {
       dividerTheme: const DividerThemeData(color: divider, thickness: 1),
       chipTheme: ChipThemeData(
         backgroundColor: primaryLight,
-        labelStyle: GoogleFonts.inter(color: primary, fontWeight: FontWeight.w500),
+        labelStyle: const TextStyle(color: primary, fontWeight: FontWeight.w500),
         side: BorderSide.none,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/attendance_record_model.dart';
 import 'package:provider/provider.dart';
@@ -6,10 +7,14 @@ import '../../controllers/auth_controller.dart';
 import '../../controllers/course_controller.dart';
 import '../../core/constants/app_theme.dart';
 import '../../core/utils/connectivity_service.dart';
+import '../../core/utils/string_utils.dart';
+import '../../services/session_service.dart';
 import '../shared/widgets/connectivity_banner.dart';
-import '../shared/widgets/stats_card.dart';
+import '../shared/widgets/animated_stats_card.dart';
+import '../shared/widgets/staggered_fade_in.dart';
 import 'scan_view.dart';
 import 'attendance_history_view.dart';
+import 'student_courses_view.dart';
 import 'student_profile_view.dart';
 
 class StudentHomeView extends StatefulWidget {
@@ -22,6 +27,7 @@ class StudentHomeView extends StatefulWidget {
 class _StudentHomeViewState extends State<StudentHomeView> {
   int _selectedIndex = 0;
   bool _isOnline = true;
+  StreamSubscription<bool>? _connectivitySub;
 
   @override
   void initState() {
@@ -35,8 +41,9 @@ class _StudentHomeViewState extends State<StudentHomeView> {
         deviceUuid: auth.deviceUuid ?? '',
       );
       context.read<CourseController>().loadCourses();
+      SessionService().prefetchOpenSessionsForStudent();
     });
-    ConnectivityService().onConnectivityChanged.listen((online) {
+    _connectivitySub = ConnectivityService().onConnectivityChanged.listen((online) {
       if (mounted) setState(() => _isOnline = online);
     });
     ConnectivityService().checkConnection().then((v) {
@@ -45,11 +52,18 @@ class _StudentHomeViewState extends State<StudentHomeView> {
   }
 
   @override
+  void dispose() {
+    _connectivitySub?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final pages = [
       const _StudentDashboard(),
       const ScanView(),
       const AttendanceHistoryView(),
+      const StudentCoursesView(),
       const StudentProfileView(),
     ];
 
@@ -58,18 +72,39 @@ class _StudentHomeViewState extends State<StudentHomeView> {
       body: Column(
         children: [
           ConnectivityBanner(isOnline: _isOnline),
-          Expanded(child: pages[_selectedIndex]),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 280),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.04, 0),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              ),
+              child: KeyedSubtree(
+                key: ValueKey(_selectedIndex),
+                child: pages[_selectedIndex],
+              ),
+            ),
+          ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (i) => setState(() => _selectedIndex = i),
-        items: [
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home'),
-          BottomNavigationBarItem(
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (i) => setState(() => _selectedIndex = i),
+        destinations: [
+          const NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
             icon: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -89,10 +124,10 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                   ),
               ],
             ),
-            activeIcon: const Icon(Icons.qr_code_scanner),
+            selectedIcon: const Icon(Icons.qr_code_scanner),
             label: 'Scan',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -117,13 +152,19 @@ class _StudentHomeViewState extends State<StudentHomeView> {
                   ),
               ],
             ),
-            activeIcon: const Icon(Icons.history),
+            selectedIcon: const Icon(Icons.history),
             label: 'History',
           ),
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile'),
+          const NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book),
+            label: 'Courses',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
       ),
     );
@@ -165,7 +206,7 @@ class _StudentDashboard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
-                    'Hello, ${auth.user?.firstName ?? ''}! 👋',
+                    'Welcome back, ${auth.user?.firstName ?? ''}',
                     style: const TextStyle(
                         color: Colors.white,
                         fontSize: 22,
@@ -235,30 +276,30 @@ class _StudentDashboard extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: 1.4,
+                childAspectRatio: 1.05,
                 children: [
-                  StatsCard(
+                  AnimatedStatsCard(
                     title: 'Total Scans',
-                    value: '$total',
+                    value: total,
                     icon: Icons.qr_code_2,
                     color: AppTheme.accent,
                   ),
-                  StatsCard(
+                  AnimatedStatsCard(
                     title: 'Synced',
-                    value: '$synced',
+                    value: synced,
                     icon: Icons.cloud_done,
                     color: AppTheme.success,
                   ),
-                  StatsCard(
+                  AnimatedStatsCard(
                     title: 'Pending Sync',
-                    value: '$pending',
+                    value: pending,
                     icon: Icons.cloud_upload_outlined,
                     color: pending > 0 ? AppTheme.warning : AppTheme.textSecondary,
                     subtitle: pending > 0 ? 'Action needed' : null,
                   ),
-                  StatsCard(
+                  AnimatedStatsCard(
                     title: 'Courses',
-                    value: '${courses.length}',
+                    value: courses.length,
                     icon: Icons.menu_book,
                     color: AppTheme.primary,
                   ),
@@ -294,7 +335,12 @@ class _StudentDashboard extends StatelessWidget {
                   ),
                 )
               else
-                ...attCtrl.records.take(5).map((r) => _RecentRecordTile(record: r)),
+                ...attCtrl.records.take(5).toList().asMap().entries.map(
+                      (e) => StaggeredFadeIn(
+                        index: e.key,
+                        child: _RecentRecordTile(record: e.value),
+                      ),
+                    ),
             ]),
           ),
         ),
@@ -417,7 +463,7 @@ class _RecentRecordTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(record.sessionId.substring(0, 8).toUpperCase(),
+                Text(record.sessionId.truncate(8).toUpperCase(),
                     style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,

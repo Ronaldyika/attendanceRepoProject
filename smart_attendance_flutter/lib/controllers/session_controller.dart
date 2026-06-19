@@ -136,7 +136,12 @@ class SessionController extends ChangeNotifier {
 
   Future<Map<String, dynamic>?> getSessionReport(String sessionId) async {
     final result = await _service.getSessionReport(sessionId);
-    return result.isSuccess ? result.data : null;
+    if (result.isSuccess) {
+      return result.data;
+    }
+
+    final local = await _service.getLocalSessionReport(sessionId);
+    return local;
   }
 
   void incrementAttendanceCount(String sessionId) {

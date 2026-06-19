@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../controllers/attendance_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../core/constants/app_theme.dart';
+import '../../core/utils/string_utils.dart';
 import '../../models/attendance_record_model.dart';
 import '../shared/widgets/status_badge.dart';
 
@@ -189,7 +190,7 @@ class _RecordCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Session · ${record.sessionId.substring(0, 8).toUpperCase()}',
+                  'Session · ${record.sessionId.truncate(8).toUpperCase()}',
                   style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 13,

@@ -7,15 +7,15 @@ class AppConstants {
   AppConstants._();
 
   // API
-  static const String baseUrl = 'https://qrscanner-5qk4.onrender.com/api/v1';
+  static const String baseUrl = 'https://qrattendance-q6g0.onrender.com/api/v1';
   static const String authBase = '$baseUrl/auth';
   static const Duration connectTimeout = Duration(seconds: 15);
   static const Duration receiveTimeout = Duration(seconds: 30);
 
   // QR
-  /// QR validity/refresh interval (lecturer QR regenerates on this cadence).
-  static const int qrValiditySeconds = 10;
-  static const int clockSkewToleranceSeconds = 5;
+  /// QR validity/refresh interval (15-minute window per thesis spec).
+  static const int qrValiditySeconds = 900;
+  static const int clockSkewToleranceSeconds = 300;
 
   // Local DB
   static const String dbName = 'smart_attendance.db';

@@ -49,6 +49,7 @@ class AttendanceController extends ChangeNotifier {
     required String sessionId,
     required String qrPayload,
     required String deviceUuid,
+    required String studentId,
   }) async {
     _scanState = AttendanceScanState.processing;
     _scanError = null;
@@ -58,11 +59,12 @@ class AttendanceController extends ChangeNotifier {
       sessionId: sessionId,
       qrPayload: qrPayload,
       deviceUuid: deviceUuid,
+      studentId: studentId,
     );
 
     if (result.isSuccess) {
       _lastScannedRecord = result.data;
-      _records.insert(0, result.data!);
+      await loadRecords(studentId);
       _scanState = AttendanceScanState.success;
       notifyListeners();
       return true;
@@ -79,6 +81,7 @@ class AttendanceController extends ChangeNotifier {
     required String qrPayload,
     required String deviceUuid,
     required String studentId,
+    String? registeredDeviceUuid,
   }) async {
     _scanState = AttendanceScanState.processing;
     _scanError = null;
@@ -89,6 +92,7 @@ class AttendanceController extends ChangeNotifier {
       qrPayload: qrPayload,
       deviceUuid: deviceUuid,
       studentId: studentId,
+      registeredDeviceUuid: registeredDeviceUuid,
     );
 
     if (result.isSuccess) {

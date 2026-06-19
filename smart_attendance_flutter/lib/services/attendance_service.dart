@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
+import '../core/constants/app_constants.dart';
 import '../core/database/database_helper.dart';
 import '../core/network/api_client.dart';
 import '../core/network/api_result.dart';
@@ -18,6 +19,7 @@ class AttendanceService {
     required String sessionId,
     required String qrPayload,
     required String deviceUuid,
+    required String studentId,
   }) async {
     try {
       final now = DateTime.now().toUtc().toIso8601String();
@@ -29,10 +31,37 @@ class AttendanceService {
       });
       final record = AttendanceRecordModel.fromJson(
           resp.data['record'] as Map<String, dynamic>);
+      await _persistRecordLocally(record, pendingSync: false);
       return ApiResult.success(record);
     } catch (e) {
       return ApiResult.failure(_parseError(e));
     }
+  }
+
+  Future<void> _persistRecordLocally(
+    AttendanceRecordModel record, {
+    required bool pendingSync,
+  }) async {
+    final local = AttendanceRecordModel(
+      id: record.id.isNotEmpty ? record.id : const Uuid().v4(),
+      studentId: record.studentId,
+      sessionId: record.sessionId,
+      deviceUuid: record.deviceUuid,
+      scanSource: record.scanSource.isNotEmpty ? record.scanSource : 'online',
+      scannedAt: record.scannedAt,
+      syncedAt: pendingSync ? null : (record.syncedAt ?? DateTime.now().toUtc().toIso8601String()),
+      idempotencyKey: record.idempotencyKey.isNotEmpty
+          ? record.idempotencyKey
+          : '${record.deviceUuid}|${record.sessionId}|${DateTime.parse(record.scannedAt).millisecondsSinceEpoch}',
+      hmacSignature: record.hmacSignature,
+      qrPayload: record.qrPayload,
+      pendingSync: pendingSync,
+    );
+    await _db.insert(
+      'attendance_records',
+      local.toDb(),
+      conflict: ConflictAlgorithm.ignore,
+    );
   }
 
   // ── Offline scan (store locally) ─────────────────────────────────────────
@@ -41,15 +70,25 @@ class AttendanceService {
     required String qrPayload,
     required String deviceUuid,
     required String studentId,
+    String? registeredDeviceUuid,
   }) async {
-    // 1. Verify HMAC & expiry
+    // 4. Device UUID binding (thesis §3.4.2 check #4)
+    if (registeredDeviceUuid != null &&
+        registeredDeviceUuid.isNotEmpty &&
+        deviceUuid != registeredDeviceUuid) {
+      return AttendanceScanResult.failure(
+        'This device is not registered to your account. Contact an administrator to rebind.',
+      );
+    }
+
+    // 1–3. Verify HMAC & expiry
     if (session.sessionSecret == null) {
       return AttendanceScanResult.failure('Session secret not available offline.');
     }
     final verify = QrUtils.verifyQrPayload(
       qrPayload,
       session.sessionSecret!,
-      clockSkewTolerance: 300,
+      clockSkewTolerance: AppConstants.clockSkewToleranceSeconds,
     );
     if (!verify.ok) {
       return AttendanceScanResult.failure(
@@ -103,6 +142,16 @@ class AttendanceService {
   }
 
   // ── Batch sync ────────────────────────────────────────────────────────────
+  Future<ApiResult<List<Map<String, dynamic>>>> getSyncHistory() async {
+    try {
+      final resp = await _api.get('/sync/history/');
+      final list = extractPaginatedList(resp.data);
+      return ApiResult.success(list.cast<Map<String, dynamic>>());
+    } catch (e) {
+      return ApiResult.failure(parseApiError(e));
+    }
+  }
+
   Future<ApiResult<Map<String, dynamic>>> syncPendingRecords({
     required String deviceUuid,
     required String studentId,

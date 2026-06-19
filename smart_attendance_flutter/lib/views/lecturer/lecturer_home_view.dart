@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/session_model.dart';
 import 'package:provider/provider.dart';
@@ -8,10 +9,12 @@ import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_theme.dart';
 import '../../core/utils/connectivity_service.dart';
 import '../shared/widgets/connectivity_banner.dart';
-import '../shared/widgets/stats_card.dart';
+import '../shared/widgets/animated_stats_card.dart';
 import 'session_list_view.dart';
 import 'courses_view.dart';
 import 'profile_view.dart';
+import '../shared/animations/fade_slide_route.dart';
+import 'reports_view.dart';
 
 class LecturerHomeView extends StatefulWidget {
   const LecturerHomeView({super.key});
@@ -23,6 +26,7 @@ class LecturerHomeView extends StatefulWidget {
 class _LecturerHomeViewState extends State<LecturerHomeView> {
   int _selectedIndex = 0;
   bool _isOnline = true;
+  StreamSubscription<bool>? _connectivitySub;
 
   @override
   void initState() {
@@ -31,10 +35,18 @@ class _LecturerHomeViewState extends State<LecturerHomeView> {
       context.read<CourseController>().loadCourses();
       context.read<SessionController>().loadSessions();
     });
-    ConnectivityService().onConnectivityChanged.listen((online) {
+    _connectivitySub = ConnectivityService().onConnectivityChanged.listen((online) {
       if (mounted) setState(() => _isOnline = online);
     });
-    ConnectivityService().checkConnection().then((v) => setState(() => _isOnline = v));
+    ConnectivityService().checkConnection().then((v) {
+      if (mounted) setState(() => _isOnline = v);
+    });
+  }
+
+  @override
+  void dispose() {
+    _connectivitySub?.cancel();
+    super.dispose();
   }
 
   final _pages = const [
@@ -51,17 +63,53 @@ class _LecturerHomeViewState extends State<LecturerHomeView> {
       body: Column(
         children: [
           ConnectivityBanner(isOnline: _isOnline),
-          Expanded(child: _pages[_selectedIndex]),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 280),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.04, 0),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              ),
+              child: KeyedSubtree(
+                key: ValueKey(_selectedIndex),
+                child: _pages[_selectedIndex],
+              ),
+            ),
+          ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (i) => setState(() => _selectedIndex = i),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), activeIcon: Icon(Icons.dashboard), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.qr_code_2_outlined), activeIcon: Icon(Icons.qr_code_2), label: 'Sessions'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book_outlined), activeIcon: Icon(Icons.menu_book), label: 'Courses'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (i) => setState(() => _selectedIndex = i),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.qr_code_2_outlined),
+            selectedIcon: Icon(Icons.qr_code_2),
+            label: 'Sessions',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book),
+            label: 'Courses',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
       ),
     );
@@ -93,7 +141,7 @@ class _LecturerDashboard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text('Hello, ${auth.user?.firstName ?? ''}! 👋',
+                  Text('Welcome, ${auth.user?.firstName ?? ''}',
                       style: const TextStyle(
                           color: Colors.white,
                           fontSize: 22,
@@ -124,31 +172,30 @@ class _LecturerDashboard extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: 1.4,
+                childAspectRatio: 1.05,
                 children: [
-                  StatsCard(
+                  AnimatedStatsCard(
                     title: 'Total Courses',
-                    value: '${courses.courses.length}',
+                    value: courses.courses.length,
                     icon: Icons.menu_book,
                     color: AppTheme.primary,
                   ),
-                  StatsCard(
+                  AnimatedStatsCard(
                     title: 'Active Sessions',
-                    value: '${sessions.openSessions.length}',
+                    value: sessions.openSessions.length,
                     icon: Icons.qr_code_2,
                     color: AppTheme.accent,
                   ),
-                  StatsCard(
+                  AnimatedStatsCard(
                     title: 'Total Sessions',
-                    value: '${sessions.sessions.length}',
+                    value: sessions.sessions.length,
                     icon: Icons.history,
                     color: AppTheme.warning,
                   ),
-                  StatsCard(
+                  AnimatedStatsCard(
                     title: 'Students Reached',
                     value: sessions.sessions
-                        .fold<int>(0, (s, e) => s + e.attendanceCount)
-                        .toString(),
+                        .fold<int>(0, (s, e) => s + e.attendanceCount),
                     icon: Icons.people,
                     color: AppTheme.success,
                   ),
@@ -179,7 +226,9 @@ class _LecturerDashboard extends StatelessWidget {
                       icon: Icons.bar_chart,
                       label: 'Reports',
                       color: AppTheme.accent,
-                      onTap: () {},
+                      onTap: () => Navigator.push(
+                          context,
+                          FadeSlideRoute(page: const ReportsView())),
                     ),
                   ),
                 ],

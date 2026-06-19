@@ -69,15 +69,6 @@ class AuthController extends ChangeNotifier {
     required String password,
     required String passwordConfirm,
   }) async {
-    print('\n╔═══════════════════════════════════════════════════════╗');
-    print('║          REGISTRATION INITIATED                       ║');
-    print('╚═══════════════════════════════════════════════════════╝');
-    print('Email: $email');
-    print('Name: $firstName $lastName');
-    print('Reg#: $registrationNumber');
-    print('Role: $role');
-    print('');
-    
     _status = AuthStatus.loading;
     _error = null;
     notifyListeners();
@@ -93,17 +84,10 @@ class AuthController extends ChangeNotifier {
     );
 
     if (result.isSuccess) {
-      print('╔═══════════════════════════════════════════════════════╗');
-      print('║          ✓ REGISTRATION SUCCESSFUL                   ║');
-      print('╚═══════════════════════════════════════════════════════╝\n');
       _status = AuthStatus.unauthenticated;
       notifyListeners();
       return true;
     } else {
-      print('╔═══════════════════════════════════════════════════════╗');
-      print('║          ✗ REGISTRATION FAILED                       ║');
-      print('╚═══════════════════════════════════════════════════════╝');
-      print('Error: ${result.error}\n');
       _error = result.error;
       _status = AuthStatus.unauthenticated;
       notifyListeners();

@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../controllers/session_controller.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_theme.dart';
+import '../shared/animations/fade_slide_route.dart';
 import '../shared/widgets/status_badge.dart';
+import '../shared/widgets/staggered_fade_in.dart';
 import 'session_detail_view.dart';
 
 class SessionListView extends StatelessWidget {
@@ -60,14 +62,17 @@ class SessionListView extends StatelessWidget {
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, i) {
                     final session = ctrl.sessions[i];
-                    return _SessionCard(
+                    return StaggeredFadeIn(
+                      index: i,
+                      child: _SessionCard(
                       session: session,
                       onTap: () {
                         ctrl.setActiveSession(session);
-                        Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => SessionDetailView(session: session),
+                        Navigator.push(context, FadeSlideRoute(
+                          page: SessionDetailView(session: session),
                         ));
                       },
+                    ),
                     );
                   },
                 ),

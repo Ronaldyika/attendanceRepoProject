@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../utils/string_utils.dart';
 
 /// Unwraps Django paginated `{ count, results }` or a plain JSON array.
 List<dynamic> extractPaginatedList(dynamic data) {
@@ -36,11 +37,8 @@ String parseApiError(
       if (body.contains('<!doctype html>') || body.contains('Server Error')) {
         return _serverErrorMessage(status);
       }
-      return body.length > 200 ? body.substring(0, 200) : body;
+      return body.truncate(200);
     }
-
-    if (status == 400) return 'Invalid request. Check your input.';
-    if (status == 401) return 'Session expired. Please log in again.';
     if (status == 403) return 'You do not have permission for this action.';
     if (status == 404) return 'Resource not found.';
     if (status == 409) {

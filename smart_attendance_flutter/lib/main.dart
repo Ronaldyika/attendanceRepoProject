@@ -27,7 +27,8 @@ import 'views/auth/register_view.dart';
 import 'views/auth/splash_view.dart';
 import 'views/lecturer/create_session_view.dart';
 import 'views/lecturer/lecturer_home_view.dart';
-import 'views/lecturer/session_detail_view.dart';
+import 'views/lecturer/reports_view.dart';
+import 'views/shared/animations/fade_slide_route.dart';
 import 'views/student/student_home_view.dart';
 
 void main() async {
@@ -69,6 +70,16 @@ class SmartAttendanceApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         initialRoute: AppConstants.routeSplash,
+        onGenerateRoute: (settings) {
+          switch (settings.name) {
+            case AppConstants.routeCreateSession:
+              return FadeSlideRoute(page: const CreateSessionView());
+            case AppConstants.routeReports:
+              return FadeSlideRoute(page: const ReportsView());
+            default:
+              return null;
+          }
+        },
         routes: {
           AppConstants.routeSplash: (_) => const SplashView(),
           AppConstants.routeLogin: (_) => const LoginView(),

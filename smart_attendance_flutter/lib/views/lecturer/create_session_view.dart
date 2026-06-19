@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../controllers/course_controller.dart';
 import '../../controllers/session_controller.dart';
 import '../../core/constants/app_theme.dart';
+import '../../core/utils/string_utils.dart';
 import '../../models/course_model.dart';
 import '../shared/widgets/app_button.dart';
 import '../shared/widgets/app_text_field.dart';
@@ -243,7 +244,7 @@ class _CourseTile extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  course.code.substring(0, 2),
+                  course.code.truncate(2).toUpperCase(),
                   style: TextStyle(
                       color: isSelected ? Colors.white : AppTheme.textSecondary,
                       fontWeight: FontWeight.w700,

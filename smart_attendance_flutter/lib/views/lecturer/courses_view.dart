@@ -3,10 +3,12 @@ import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/course_controller.dart';
 import '../../core/constants/app_theme.dart';
+import '../../core/utils/string_utils.dart';
 import '../../models/course_model.dart';
 import '../../models/user_model.dart';
-import '../shared/widgets/app_button.dart';
+import '../shared/widgets/shimmer_placeholder.dart';
 import '../shared/widgets/app_text_field.dart';
+import '../shared/widgets/app_button.dart';
 
 class LecturerCoursesView extends StatelessWidget {
   const LecturerCoursesView({super.key});
@@ -33,7 +35,7 @@ class LecturerCoursesView extends StatelessWidget {
         label: const Text('New Course', style: TextStyle(color: Colors.white)),
       ),
       body: ctrl.state == CourseState.loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const ShimmerListPlaceholder(itemCount: 5)
           : ctrl.courses.isEmpty
               ? Center(
                   child: Column(
@@ -118,9 +120,7 @@ class _CourseCard extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                course.code.length >= 3
-                    ? course.code.substring(0, 3)
-                    : course.code,
+                course.code.truncate(3).toUpperCase(),
                 style: TextStyle(
                     color: color,
                     fontWeight: FontWeight.w800,
@@ -293,19 +293,22 @@ class _EnrolStudentsSheetState extends State<_EnrolStudentsSheet> {
                 itemBuilder: (_, i) {
                   final s = _students[i];
                   final checked = _selected.contains(s.id);
-                  return CheckboxListTile(
-                    value: checked,
-                    onChanged: (v) {
-                      setState(() {
-                        if (v == true) {
-                          _selected.add(s.id);
-                        } else {
-                          _selected.remove(s.id);
-                        }
-                      });
-                    },
-                    title: Text(s.fullName),
-                    subtitle: Text(s.registrationNumber ?? s.email),
+                  return Material(
+                    color: Colors.transparent,
+                    child: CheckboxListTile(
+                      value: checked,
+                      onChanged: (v) {
+                        setState(() {
+                          if (v == true) {
+                            _selected.add(s.id);
+                          } else {
+                            _selected.remove(s.id);
+                          }
+                        });
+                      },
+                      title: Text(s.fullName),
+                      subtitle: Text(s.registrationNumber ?? s.email),
+                    ),
                   );
                 },
               ),

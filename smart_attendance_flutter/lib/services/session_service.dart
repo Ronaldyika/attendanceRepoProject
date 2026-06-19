@@ -70,6 +70,27 @@ class SessionService {
     }
   }
 
+  Future<SessionModel?> fetchAndCacheSession(String sessionId) async {
+    try {
+      final resp = await _api.get('/sessions/$sessionId/');
+      final session =
+          SessionModel.fromJson(resp.data as Map<String, dynamic>);
+      await _cacheSession(session);
+      return session;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> prefetchOpenSessionsForStudent() async {
+    final result = await getSessions();
+    if (result.isSuccess) {
+      for (final s in result.data!.where((s) => s.isOpen)) {
+        await _cacheSession(s);
+      }
+    }
+  }
+
   Future<ApiResult<Map<String, dynamic>>> getSessionReport(String sessionId) async {
     try {
       final resp = await _api.get('/reports/sessions/$sessionId/');
@@ -77,6 +98,24 @@ class SessionService {
     } catch (e) {
       return ApiResult.failure(parseApiError(e));
     }
+  }
+
+  Future<Map<String, dynamic>> getLocalSessionReport(String sessionId) async {
+    final rows = await _db.query(
+      'attendance_records',
+      where: 'session_id = ?',
+      whereArgs: [sessionId],
+      orderBy: 'scanned_at DESC',
+    );
+
+    return {
+      'attendance_count': rows.length,
+      'records': rows.map((row) => {
+            'student_id': row['student_id'],
+            'scan_source': row['scan_source'],
+            'scanned_at': row['scanned_at'],
+          }).toList(),
+    };
   }
 
   Future<void> _cacheSession(SessionModel session) async {

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_theme.dart';
+import '../../core/utils/string_utils.dart';
 
 class LecturerProfileView extends StatelessWidget {
   const LecturerProfileView({super.key});
@@ -33,7 +34,7 @@ class LecturerProfileView extends StatelessWidget {
                     radius: 40,
                     backgroundColor: AppTheme.primaryLight,
                     child: Text(
-                      user?.firstName.substring(0, 1).toUpperCase() ?? 'L',
+                      user?.firstName.safeInitial('L') ?? 'L',
                       style: const TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w700,

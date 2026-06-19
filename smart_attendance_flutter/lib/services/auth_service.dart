@@ -89,18 +89,6 @@ class AuthService {
       final user = UserModel.fromJson(asStringMap(userJson)!);
       return ApiResult.success(user);
     } catch (e) {
-      print('\n╔═══════════════════════════════════════════════════════╗');
-      print('║          REGISTRATION ERROR RESPONSE                 ║');
-      print('╚═══════════════════════════════════════════════════════╝');
-      print('Error Type: ${e.runtimeType}');
-      if (e is DioException) {
-        print('Status Code: ${e.response?.statusCode}');
-        print('Response Body: ${e.response?.data}');
-        print('Full Response: ${e.response?.toString()}');
-      } else {
-        print('Error Details: $e');
-      }
-      print('');
       return ApiResult.failure(parseApiError(e));
     }
   }

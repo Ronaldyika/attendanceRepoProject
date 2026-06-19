@@ -470,6 +470,13 @@ class _AttendeeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final studentName = (record['student_name'] as String?)?.trim();
+    final displayName = (studentName != null && studentName.isNotEmpty)
+        ? studentName
+        : (record['student_id'] as String?) ?? 'Student';
+    final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'S';
+    final source = (record['scan_source'] as String?) ?? 'online';
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -478,7 +485,7 @@ class _AttendeeRow extends StatelessWidget {
             radius: 16,
             backgroundColor: AppTheme.primaryLight,
             child: Text(
-              (record['student_name'] ?? 'S')[0].toUpperCase(),
+              initial,
               style: const TextStyle(
                   color: AppTheme.primary,
                   fontWeight: FontWeight.w600,
@@ -487,7 +494,7 @@ class _AttendeeRow extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(record['student_name'] ?? 'Student',
+            child: Text(displayName,
                 style: const TextStyle(
                     fontSize: 13, color: AppTheme.textPrimary)),
           ),
@@ -495,14 +502,18 @@ class _AttendeeRow extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: AppTheme.success.withOpacity(0.1),
+              color: source == 'offline'
+                  ? AppTheme.warning.withOpacity(0.1)
+                  : AppTheme.success.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              record['scan_source'] == 'offline' ? 'Offline' : 'Online',
-              style: const TextStyle(
+              source == 'offline' ? 'Offline' : 'Online',
+              style: TextStyle(
                   fontSize: 10,
-                  color: AppTheme.success,
+                  color: source == 'offline'
+                      ? AppTheme.warning
+                      : AppTheme.success,
                   fontWeight: FontWeight.w600),
             ),
           ),

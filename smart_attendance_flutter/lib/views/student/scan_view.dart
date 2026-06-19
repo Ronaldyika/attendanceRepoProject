@@ -7,6 +7,7 @@ import '../../core/constants/app_theme.dart';
 import '../../core/utils/connectivity_service.dart';
 import '../../core/utils/qr_utils.dart';
 import '../../services/session_service.dart';
+import '../shared/widgets/animated_scan_line.dart';
 
 class ScanView extends StatefulWidget {
   const ScanView({super.key});
@@ -68,23 +69,36 @@ class _ScanViewState extends State<ScanView>
         sessionId: parsed.sessionId,
         qrPayload: raw,
         deviceUuid: deviceUuid,
+        studentId: studentId,
       );
       errorMsg = attCtrl.scanError;
-    } else {
-      // Offline: load session from local cache for HMAC verification
-      final session = await _sessionService.getLocalSession(parsed.sessionId);
+    }
+
+    if (!success) {
+      var session = await _sessionService.getLocalSession(parsed.sessionId);
+      if (session == null && isOnline) {
+        session = await _sessionService.fetchAndCacheSession(parsed.sessionId);
+      }
+
       if (session == null) {
-        errorMsg = 'Session not found locally. Connect to the internet to validate this QR code.';
+        errorMsg =
+            'Session is not cached locally. Connect to the internet once to download scan keys for offline attendance.';
       } else {
-        success = await attCtrl.scanQrOffline(
-          session: session,
-          qrPayload: raw,
-          deviceUuid: deviceUuid,
-          studentId: studentId,
-        );
-        if (attCtrl.scanState == AttendanceScanState.duplicate) {
-          errorMsg = attCtrl.scanError;
+        if (session.sessionSecret == null && isOnline) {
+          session = await _sessionService.fetchAndCacheSession(parsed.sessionId) ?? session;
+        }
+
+        if (session.sessionSecret == null) {
+          errorMsg =
+              'Session secret unavailable for offline scanning. Please refresh the lecture session online.';
         } else {
+          success = await attCtrl.scanQrOffline(
+            session: session,
+            qrPayload: raw,
+            deviceUuid: deviceUuid,
+            studentId: studentId,
+            registeredDeviceUuid: auth.user!.deviceUuid,
+          );
           errorMsg = attCtrl.scanError;
         }
       }
@@ -221,8 +235,9 @@ class _ScannerOverlay extends StatelessWidget {
               ),
               child: Stack(
                 children: [
-                  // Corner decorators
                   ..._buildCorners(),
+                  if (!isProcessing)
+                    const AnimatedScanLine(frameSize: 260),
                   if (isProcessing)
                     Center(
                       child: Container(
@@ -382,7 +397,7 @@ class _BottomStatusBar extends StatelessWidget {
   }
 }
 
-class _ScanResultSheet extends StatelessWidget {
+class _ScanResultSheet extends StatefulWidget {
   final bool isSuccess, isDuplicate, isOnline;
   final VoidCallback onDismiss;
 
@@ -394,7 +409,37 @@ class _ScanResultSheet extends StatelessWidget {
   });
 
   @override
+  State<_ScanResultSheet> createState() => _ScanResultSheetState();
+}
+
+class _ScanResultSheetState extends State<_ScanResultSheet>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500));
+    _scale = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut),
+    );
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isSuccess = widget.isSuccess;
+    final isDuplicate = widget.isDuplicate;
+    final isOnline = widget.isOnline;
+
     return Container(
       padding: const EdgeInsets.all(28),
       margin: const EdgeInsets.all(16),
@@ -405,29 +450,32 @@ class _ScanResultSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: isDuplicate
-                  ? AppTheme.warning.withOpacity(0.1)
-                  : isSuccess
-                      ? AppTheme.success.withOpacity(0.1)
-                      : AppTheme.error.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isDuplicate
-                  ? Icons.warning_amber_rounded
-                  : isSuccess
-                      ? Icons.check_circle_outline
-                      : Icons.error_outline,
-              size: 40,
-              color: isDuplicate
-                  ? AppTheme.warning
-                  : isSuccess
-                      ? AppTheme.success
-                      : AppTheme.error,
+          ScaleTransition(
+            scale: _scale,
+            child: Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: isDuplicate
+                    ? AppTheme.warning.withOpacity(0.1)
+                    : isSuccess
+                        ? AppTheme.success.withOpacity(0.1)
+                        : AppTheme.error.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isDuplicate
+                    ? Icons.warning_amber_rounded
+                    : isSuccess
+                        ? Icons.check_circle_outline
+                        : Icons.error_outline,
+                size: 40,
+                color: isDuplicate
+                    ? AppTheme.warning
+                    : isSuccess
+                        ? AppTheme.success
+                        : AppTheme.error,
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -479,7 +527,7 @@ class _ScanResultSheet extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: onDismiss,
+              onPressed: widget.onDismiss,
               style: ElevatedButton.styleFrom(
                 backgroundColor: isSuccess ? AppTheme.success : AppTheme.primary,
                 padding: const EdgeInsets.symmetric(vertical: 14),

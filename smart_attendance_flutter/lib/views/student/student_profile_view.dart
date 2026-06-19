@@ -4,6 +4,9 @@ import '../../controllers/attendance_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_theme.dart';
+import '../../core/utils/string_utils.dart';
+import '../shared/animations/fade_slide_route.dart';
+import 'sync_history_view.dart';
 
 class StudentProfileView extends StatelessWidget {
   const StudentProfileView({super.key});
@@ -38,7 +41,7 @@ class StudentProfileView extends StatelessWidget {
                     radius: 36,
                     backgroundColor: Colors.white.withOpacity(0.2),
                     child: Text(
-                      user?.firstName.substring(0, 1).toUpperCase() ?? 'S',
+                      user?.firstName.safeInitial('S') ?? 'S',
                       style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
@@ -116,8 +119,8 @@ class StudentProfileView extends StatelessWidget {
             _InfoTile(
               icon: Icons.fingerprint,
               label: 'Device UUID',
-              value: auth.deviceUuid?.substring(0, 16) != null
-                  ? '${auth.deviceUuid!.substring(0, 16)}...'
+              value: auth.deviceUuid != null && auth.deviceUuid!.isNotEmpty
+                  ? '${auth.deviceUuid!.truncate(16, '...')}'
                   : 'Unavailable',
             ),
             _InfoTile(
@@ -183,6 +186,18 @@ class StudentProfileView extends StatelessWidget {
               ),
               const SizedBox(height: 8),
             ],
+
+            _InfoTile(
+              icon: Icons.history,
+              label: 'Sync History',
+              value: 'View batch upload log',
+              valueColor: AppTheme.primary,
+              onTap: () => Navigator.push(
+                context,
+                FadeSlideRoute(page: const SyncHistoryView()),
+              ),
+            ),
+            const SizedBox(height: 8),
 
             // Logout
             GestureDetector(
@@ -262,11 +277,20 @@ class _InfoTile extends StatelessWidget {
   final IconData icon;
   final String label, value;
   final Color? valueColor;
-  const _InfoTile({required this.icon, required this.label, required this.value, this.valueColor});
+  final VoidCallback? onTap;
+  const _InfoTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -293,7 +317,11 @@ class _InfoTile extends StatelessWidget {
               ],
             ),
           ),
+          if (onTap != null)
+            const Icon(Icons.chevron_right,
+                color: AppTheme.textSecondary, size: 18),
         ],
+      ),
       ),
     );
   }
