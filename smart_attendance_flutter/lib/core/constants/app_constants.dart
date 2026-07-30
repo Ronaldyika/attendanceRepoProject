@@ -26,6 +26,7 @@ class AppConstants {
   static const String kRefreshToken = 'refresh_token';
   static const String kDeviceUuid = 'device_uuid';
   static const String kUserData = 'user_data';
+  static const String kOfflineLoginKey = 'offline_login_key';
 
   // Sync
   static const int syncPendingAlertHours = 6;

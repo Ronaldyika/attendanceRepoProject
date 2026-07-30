@@ -71,6 +71,29 @@ class AuthController extends ChangeNotifier {
       return true;
     }
 
+    final offlineResult = await _service.loginOffline(
+      email: email,
+      password: password,
+      deviceUuid: _deviceUuid!,
+    );
+    if (offlineResult.isSuccess) {
+      final payload = offlineResult.data;
+      final userData = payload?['user'];
+      if (userData is! Map) {
+        _error = 'Unable to restore your offline session.';
+        _user = null;
+        _status = AuthStatus.unauthenticated;
+        notifyListeners();
+        return false;
+      }
+
+      _user = UserModel.fromJson(userData.cast<String, dynamic>());
+      _status = AuthStatus.authenticated;
+      _error = null;
+      notifyListeners();
+      return true;
+    }
+
     _error = result.error;
     _user = null;
     _status = AuthStatus.unauthenticated;

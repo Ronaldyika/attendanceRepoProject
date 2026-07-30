@@ -98,12 +98,12 @@ class _SyncBatchCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isSuccess
-              ? AppTheme.success.withOpacity(0.3)
+              ? AppTheme.success.withValues(alpha: 0.3)
               : AppTheme.divider,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.06),
+            color: AppTheme.primary.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -118,7 +118,7 @@ class _SyncBatchCard extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: (isSuccess ? AppTheme.success : AppTheme.warning)
-                      .withOpacity(0.12),
+                      .withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -148,8 +148,8 @@ class _SyncBatchCard extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: isSuccess
-                      ? AppTheme.success.withOpacity(0.1)
-                      : AppTheme.warning.withOpacity(0.1),
+                      ? AppTheme.success.withValues(alpha: 0.1)
+                      : AppTheme.warning.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -193,7 +193,7 @@ class _MetricChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -220,7 +220,7 @@ class _EmptyState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.sync_disabled,
-              size: 64, color: AppTheme.textSecondary.withOpacity(0.4)),
+              size: 64, color: AppTheme.textSecondary.withValues(alpha: 0.4)),
           const SizedBox(height: 16),
           const Text('No sync history yet',
               style: TextStyle(

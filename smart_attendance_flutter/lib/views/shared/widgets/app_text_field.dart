@@ -26,7 +26,7 @@ class AppTextField extends StatefulWidget {
     this.suffixIcon,
     this.maxLines = 1,
     this.readOnly = false,
-    this.onTap = null,
+    this.onTap,
     this.onChanged,
   });
 

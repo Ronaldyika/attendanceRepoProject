@@ -9,8 +9,12 @@ enum AttendanceScanState { idle, scanning, processing, success, duplicate, error
 enum SyncState { idle, syncing, synced, error }
 
 class AttendanceController extends ChangeNotifier {
-  final _service = AttendanceService();
-  final _connectivity = ConnectivityService();
+  final AttendanceService _service;
+  final ConnectivityService _connectivity;
+
+  AttendanceController({AttendanceService? service, ConnectivityService? connectivity})
+      : _service = service ?? AttendanceService(),
+        _connectivity = connectivity ?? ConnectivityService();
 
   AttendanceScanState _scanState = AttendanceScanState.idle;
   SyncState _syncState = SyncState.idle;
@@ -30,13 +34,15 @@ class AttendanceController extends ChangeNotifier {
   int get pendingCount => _pendingCount;
   bool get hasPending => _pendingCount > 0;
 
-  void initSync({required String studentId, required String deviceUuid}) {
+  Future<void> initSync({required String studentId, required String deviceUuid}) async {
     _connectivitySub = _connectivity.onConnectivityChanged.listen((online) {
-      if (online && _pendingCount > 0) {
-        syncPending(studentId: studentId, deviceUuid: deviceUuid);
+      if (online) {
+        _syncPendingIfNeeded(studentId: studentId, deviceUuid: deviceUuid);
       }
     });
-    _refreshPendingCount(studentId);
+
+    await _refreshPendingCount(studentId);
+    await _syncPendingIfNeeded(studentId: studentId, deviceUuid: deviceUuid);
   }
 
   Future<void> loadRecords(String studentId) async {
@@ -131,6 +137,7 @@ class AttendanceController extends ChangeNotifier {
 
     if (result.isSuccess) {
       await loadRecords(studentId);
+      _pendingCount = _records.where((record) => record.pendingSync).length;
       _syncState = SyncState.synced;
       notifyListeners();
       return result.data;
@@ -146,6 +153,19 @@ class AttendanceController extends ChangeNotifier {
     final pending = await _service.getPendingRecords(studentId);
     _pendingCount = pending.length;
     notifyListeners();
+  }
+
+  Future<void> _syncPendingIfNeeded({
+    required String studentId,
+    required String deviceUuid,
+  }) async {
+    if (_pendingCount <= 0) return;
+    if (_syncState == SyncState.syncing) return;
+
+    final online = await _connectivity.checkConnection();
+    if (!online) return;
+
+    await syncPending(studentId: studentId, deviceUuid: deviceUuid);
   }
 
   void resetScanState() {

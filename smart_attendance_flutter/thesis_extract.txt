@@ -1,0 +1,3151 @@
+--- PAGE 1 ---
+ 
+ 
+THE UNIVERSITY OF BAMENDA 
+ 
+NATIONAL HIGHER 
+POLYTECHNIC 
+INSTITUTE 
+ DEPARTMENT OF 
+COMPUTER 
+ENGINEERING 
+ 
+ 
+DESIGN AND IMPLEMENTATION OF AN OFFLINE-CAPABLE SMART 
+ATTENDANCE SYSTEM USING QR CODES AND SECURE 
+SYNCHRONISATION 
+ 
+ 
+A Dissertation Submitted to the Department of Computer Engineering in the National 
+Higher Polytechnic Institute of The University of Bamenda in Partial Fulfilment of the 
+Requirements for the Award of a Master of Engineering Degree in Computer Engineering 
+ 
+BY: 
+BUHNYUY RONALD YIKA 
+Registration Number: UBa25EP188 
+ 
+SUPERVISOR: 
+Dr. M. Nsangou Mouchili (PhD) 
+ 
+FIELD SUPERVISOR 
+Eng. N. Titus 
+ 
+ 
+June 2026
+ 
+
+--- PAGE 2 ---
+ 
+ 
+DECLARATION OF ORIGINALITY OF STUDY 
+I, Buhnyuy Ronald Yika, registration number UBa25EP188, in the Department of 
+Computer Engineering, National Higher Polytechnic Institute, The University of 
+Bamenda, hereby declare that this work titled “Design and Implementation of an Offline-
+Capable Smart Attendance System Using QR Codes and Secure Synchronisation: The 
+Case of CivilSalt Bamenda” is my original work. It has not been presented in any 
+application for a degree or any academic pursuit elsewhere. I have acknowledged all 
+borrowed ideas nationally and internationally through citations. 
+Date: _______________________ 
+Signature of author: _______________________ 
+ 
+--- PAGE 3 ---
+ 
+ 
+CERTIFICATION OF CORRECTIONS AFTER DEFENCE 
+This is to certify that this project titled “Design and Implementation of an Offline-Capable 
+Smart Attendance System Using QR Codes and Secure Synchronisation: The Case of 
+CivilSalt Bamenda” is the original work of Buhnyuy Ronald Yika. This work is submitted 
+in partial fulfilment of the requirements for the award of a Master of Engineering Degree 
+in Computer Engineering in the National Higher Polytechnic Institute of The University 
+of Bamenda, Cameroon. The corrections and ameliorations recommended by the 
+supervisory panel prior to public defence have been incorporated in full, as summarised 
+on the page following this certification. 
+Supervisor: ________________________________________ 
+Dr. M. Nsangou Mouchili (PhD) 
+The Head of Department: _____________________________ 
+The Director: _______________________________________ 
+ 
+--- PAGE 4 ---
+ 
+ 
+ACCEPTANCE OF DISSERTATION 
+Having met the stipulated requirements, this dissertation entitled “Design and 
+Implementation of an Offline -Capable Smart Attendance System Using QR Codes and 
+Secure Synchronisation: The Case of CivilSalt Bamenda” has been accepted by the 
+Postgraduate Scho ol of The University of Bamenda in partial fulfilment of the 
+requirements for the award of a Master of Engineering Degree in Computer Engineering. 
+Chairperson, Master's Dissertation Committee: _______________________ 
+Date: ________________________________________________________ 
+ 
+--- PAGE 5 ---
+ 
+ 
+ABSTRACT 
+Attendance taking at technology training organisations such as CivilSalt Bamenda is 
+mostly done using paper registers passed around the training hall for trainees to sign. This 
+method is slow to reconcile, easy to cheat through proxy attendance, and offers  no 
+protection against a trainee signing in on behalf of someone who never arrived. Digital 
+QR code systems have been proposed as a remedy, but published systems all require a 
+live internet connection at the exact moment a trainee scans, and connectivity in Bamenda 
+is frequently slow or unavailable during peak training hours, causing existing digital 
+systems to fail precisely when they are needed most. This project designed, built, and 
+experimentally evaluated a mobile attendance system that performs all fr aud-detection 
+and validation logic entirely on the trainee's phone, requiring no server contact at the point 
+of scanning. The system uses a Flutter Android application for facilitators and trainees, a 
+Django REST Framework backend, a PostgreSQL database, a nd QR codes signed with 
+HMAC-SHA256 so they cannot be copied, replayed, or forged. A facilitator opens a 
+session and a signed, time -limited QR code is displayed; trainees scan it with their 
+registered phones, which independently verify the signature, check  expiry, confirm 
+device binding, and check for duplicates before saving the record locally and queuing it 
+for background synchronisation. Across a controlled fraud simulation of 120 proxy 
+attempts, the system achieved a 98.3 per cent detection rate against  a 95 per cent target, 
+synchronised 99.5 per cent of 1,300 offline records against a 98 per cent target, produced 
+zero duplicate records, and averaged 1.1 to 1.4 seconds per scan. Compared directly with 
+the paper register across five real sessions, it cut attendance time by 71 per cent, detected 
+all five staged proxy attempts, and produced zero data-entry errors. 
+ 
+--- PAGE 6 ---
+ 
+ 
+RÉSUMÉ 
+CONCEPTION ET IMPLÉMENTATION D'UN SYSTÈME DE PRÉSENCE 
+INTELLIGENT FONCTIONNANT HORS LIGNE À L'AIDE DE CODES QR ET 
+D'UNE SYNCHRONISATION SÉCURISÉE: LE CAS DE CIVILSALT 
+BAMENDA 
+La gestion des présences dans des organisations de formation technologique telles que 
+CivilSalt Bamenda est principalement assurée par des registres papier, facilement 
+manipulables par la présence par procuration. Les systèmes numériques existants basés 
+sur les codes QR nécessitent tous une connexion internet au moment de l'enregistrement, 
+ce qui les rend peu fiables dans les régions à faible connectivité comme Bamenda. Ce 
+projet a conçu, développé et évalué un système de présence fonctionnant entièrement hors 
+ligne, utilisant des codes QR signés par la méthode cryptographique HMAC -SHA256, 
+sous forme d'application mobile Flutter, avec un serveur Django REST Framework et une 
+base de données PostgreSQL. Les résultats expérimentaux obtenus à CivilSalt Bamenda 
+sont les suivants: taux de détection de fraude de 98,3 pourcent sur 120 tentatives 
+contrôlées, taux de synchronisation de 99,5 pourcent sur 1300 enregistrements hors ligne, 
+zéro doublon sur le serveur après 50 cycles, et temps moyen de confirmation de scan de 
+1,4 secondes, avec une réduction de 71 pourcent du temps d'enregistrement des présences 
+par rapport au registre papier. 
+Mots-clés: hors ligne, code QR, HMAC-SHA256, gestion des présences, application 
+mobile, synchronisation sécurisée 
+ 
+--- PAGE 7 ---
+ 
+ 
+DEDICATION 
+To Mr and Mrs Yika, whose support and patience made this work possible. 
+And to every trainee in Cameroon who has sat in a training hall without internet this 
+system was built for you. 
+ 
+--- PAGE 8 ---
+ 
+ 
+ACKNOWLEDGEMENTS 
+I would like to start by thanking my supervisor, Dr. M. Nsangou Mouchili, for the steady 
+guidance provided throughout this project. From the first proposal review to the final 
+evaluation chapters and the corrections requested after the defence, he was alwa ys 
+available to read drafts, suggest improvements, and ask the questions that made me think 
+more carefully about every design decision. I could not have produced work of this quality 
+without his investment of time and intellectual energy. 
+I am equally grateful to my field supervisor, Eng. N. Titus, Chief Executive Officer of 
+CivilSalt Bamenda, for the practical direction he provided during the system architecture 
+and security design phase, and for opening CivilSalt Bamenda's training progra mmes to 
+me as the deployment and evaluation site for this project. His industry experience helped 
+me avoid several design mistakes early on and guided me towards solutions that are 
+genuinely practical to deploy in the field. 
+I thank the Head of Department and all the lecturers in the Department of Computer 
+Engineering at the National Higher Polytechnic Institute of The University of Bamenda. 
+Every course I took in this programme, whether in systems programming, networking, 
+software engineering, or database management, contributed something to this project and 
+made it possible to take the work from a proposal to a fully functioning system. 
+A special thank you goes to the trainees at CivilSalt Bamenda who agreed to participate 
+in the testing sessions. Taking part in a fraud simulation experiment, where a participant 
+is asked to deliberately try to cheat a system, requires a particular kind of  trust and 
+willingness to help, and I appreciate that they gave their time honestly and reported every 
+test result accurately, including the ones where the system worked against them. 
+I also thank the technical and administrative staff at CivilSalt Bamenda who allowed me 
+to use actual training halls for the comparative evaluation sessions and gave me access to 
+network availability records that helped me design the synchronisation reliab ility 
+experiments. 
+Finally, and most deeply, I thank my family. They supported me financially through two 
+years of postgraduate study, encouraged me when progress was slow, and never 
+--- PAGE 9 ---
+ 
+ 
+complained about the time I spent away from them working on this project. Their belief 
+in me was the foundation of everything. 
+ 
+--- PAGE 10 ---
+i 
+ 
+LIST OF ABBREVIATIONS 
+Abbreviation Full Meaning 
+API Application Programming Interface 
+APK Android Package Kit 
+CRDT Conflict-Free Replicated Data Type 
+DRF Django REST Framework 
+DSRM Design Science Research Methodology 
+HMAC Hash-based Message Authentication Code 
+HTTP Hypertext Transfer Protocol 
+HTTPS Hypertext Transfer Protocol Secure 
+ICT Information and Communication Technology 
+IMEI International Mobile Equipment Identity 
+IoT Internet of Things 
+JWT JSON Web Token 
+LAN Local Area Network 
+MAC Media Access Control 
+MVC Model-View-Controller 
+NAHPI National Higher Polytechnic Institute (host institution for this degree) 
+ORM Object Relational Mapper 
+OS Operating System 
+QR Quick Response 
+RFID Radio Frequency Identification 
+REST Representational State Transfer 
+SHA Secure Hash Algorithm 
+SQL Structured Query Language 
+SQLite SQL Lite (lightweight embedded database) 
+SRS Software Requirements Specification 
+UBa University of Bamenda 
+--- PAGE 11 ---
+ 
+ii 
+Abbreviation Full Meaning 
+UI User Interface 
+UUID Universally Unique Identifier 
+WBS Work Breakdown Structure 
+XAF Central African CFA franc 
+ 
+--- PAGE 12 ---
+ 
+iii 
+GLOSSARY OF TERMS 
+Term Definition 
+Device binding 
+The practice of permanently associating one Trainee account with exactly 
+one physical phone, identified by its device UUID, so that scans from any 
+other device are rejected. 
+Facilitator The role in this system corresponding to the person who runs a CivilSalt 
+Bamenda training session and generates the QR code that trainees scan. 
+High-Stakes session A session, such as an end-of-cohort assessment, that a Facilitator explicitly 
+flags for the shorter 5-minute QR expiry preset described in Section 3.5.6. 
+Idempotency key 
+A unique string, combining device UUID, session ID, and scan timestamp, 
+used to guarantee that the same attendance record can never be inserted 
+twice on the server. 
+Offline-first 
+A software design philosophy in which the device's local storage is treated 
+as the primary data source and the server is used only for synchronisation, 
+described in Section 2.3. 
+Phone-lending attack 
+A proxy attendance strategy in which a registered Trainee hands their own 
+unlocked, registered phone to an absent colleague, who then performs a 
+scan that passes every device-level check. 
+Proxy attendance The act of one person recording attendance on behalf of another person 
+who is not actually present. 
+Session secret 
+A randomly generated 256-bit key, held only by the server and the 
+Facilitator's device, used as the HMAC-SHA256 key when signing QR 
+codes for a given session. 
+Trainee 
+The role in this system corresponding to a participant in a CivilSalt 
+Bamenda training programme who scans QR codes to record their own 
+attendance. 
+ 
+--- PAGE 13 ---
+ 
+iv 
+LIST OF FIGURES 
+Figure Title 
+Figure 3.1 High-Level System Architecture of the Attendance System 
+Figure 3.2 Use Case Diagram of the Attendance System 
+Figure 3.3 Class Diagram of the Attendance System 
+Figure 3.4 Object Diagram: A Single Attendance Session at CivilSalt Bamenda 
+Figure 3.5 Sequence Diagram: QR Generation, Scan, Local Validation and 
+Synchronisation 
+Figure 3.6 QR Payload Generation and Signing Pipeline 
+Figure 3.7 HMAC-SHA256 Computation Mechanism 
+Figure 3.8 Facilitator Interface Screens 
+Figure 3.9 Trainee Interface Screens 
+Figure 3.10 Synchronisation Protocol State Machine 
+Figure 4.1 Fraud Detection Rate by Attack Strategy 
+Figure 4.2 Attack Timing Distribution Within the QR Expiry Window 
+Figure 4.3 Synchronisation Success Rate by Network Profile 
+Figure 4.4 QR Scan-to-Confirmation Time by Device 
+Figure 4.5 Attendance Recording Time: Paper Register versus the Mobile System 
+ 
+--- PAGE 14 ---
+ 
+v 
+LIST OF TABLES 
+Table Title 
+Table 2.1 Comparative Analysis of Existing Attendance Systems 
+Table 3.1 Functional Requirements of the Attendance System 
+Table 3.2 Non-Functional Requirements of the Attendance System 
+Table 3.3 Requirements Traceability Matrix 
+Table 3.4 REST API Endpoint Summary 
+Table 3.5 Server Hardware and Software Specification Used for Synchronisation 
+Experiments 
+Table 3.6 Experimental Evaluation Metrics and Targets 
+Table 3.7 Project Risk Register and Mitigation Outcomes 
+Table 4.1 Fraud Simulation Results by Attack Strategy 
+Table 4.2 Timing of Successful Phone-Lending Attacks Relative to QR Expiry 
+Window 
+Table 4.3 Synchronisation Reliability Results by Network Profile 
+Table 4.4 QR Code Validation Speed by Device 
+Table 4.5 Comparison with Manual Attendance at CivilSalt Bamenda 
+Table 4.6 Summary of Results Against Evaluation Targets 
+ 
+--- PAGE 15 ---
+ 
+vi 
+Table of Content 
+DECLARATION OF ORIGINALITY OF STUDY ........................................................ 2 
+CERTIFICATION OF CORRECTIONS AFTER DEFENCE ......................................... 3 
+ACCEPTANCE OF DISSERTATION ............................................................................ 4 
+ABSTRACT ...................................................................................................................... 5 
+RÉSUMÉ .......................................................................................................................... 6 
+DEDICATION .................................................................................................................. 7 
+ACKNOWLEDGEMENTS .............................................................................................. 8 
+LIST OF ABBREVIATIONS ............................................................................................ i 
+GLOSSARY OF TERMS ................................................................................................ iii 
+LIST OF FIGURES ......................................................................................................... iv 
+LIST OF TABLES ............................................................................................................ v 
+CHAPTER 1: INTRODUCTION ..................................................................................... 1 
+1.1 Background and Statement of the Problem ............................................................ 1 
+1.2 Rationale ................................................................................................................. 3 
+1.3 Research Questions ................................................................................................. 4 
+1.3.1 Main Research Question .................................................................................. 4 
+1.3.2 Specific Research Questions ............................................................................ 5 
+1.4 Objectives ............................................................................................................... 5 
+1.4.1 Overall Objective ............................................................................................. 5 
+1.4.2 Specific Objectives .......................................................................................... 5 
+1.5 Significance of the Study ........................................................................................ 6 
+1.5.1 Practical Significance ...................................................................................... 6 
+1.5.2 Technical Significance ..................................................................................... 7 
+1.5.3 Scientific Significance ..................................................................................... 7 
+1.6 Scope and Delimitation of the Study ...................................................................... 7 
+1.7 Organisation of the Report ...................................................................................... 8 
+--- PAGE 16 ---
+ 
+vii 
+CHAPTER 2: LITERATURE REVIEW ........................................................................ 10 
+2.1 Overview of Attendance Management Systems ................................................... 10 
+2.2 QR Code Technology in Institutional and Training Settings ............................... 11 
+2.3 Offline-First Application Architecture ................................................................. 12 
+2.4 Fraud Prevention in Digital Attendance Systems ................................................. 14 
+2.5 Cryptographic Security: HMAC-SHA256 ............................................................ 15 
+2.6 Comparative Analysis of Existing Systems .......................................................... 16 
+2.7 Theoretical Framework ......................................................................................... 17 
+2.8 Gaps in Existing Research .................................................................................... 19 
+CHAPTER 3: MATERIALS AND METHODS ............................................................ 21 
+3.1 Research Design ................................................................................................... 21 
+3.2 Software Requirements Specification (SRS) ........................................................ 22 
+3.2.1 Purpose and Scope ......................................................................................... 22 
+3.2.2 Functional Requirements ............................................................................... 22 
+3.2.3 Non-Functional Requirements ....................................................................... 24 
+3.2.4 Requirements Traceability Matrix ................................................................. 24 
+3.2.5 Use Case Model ............................................................................................. 25 
+3.2.6 System Design Models .................................................................................. 26 
+3.3 System Architecture .............................................................................................. 30 
+3.4 Mobile Application Design and Development ..................................................... 31 
+3.4.1 Facilitator Interface ........................................................................................ 31 
+3.4.2 Trainee Interface ............................................................................................ 33 
+3.5 QR Code Generation and Verification .................................................................. 36 
+3.5.1 QR Payload Structure .................................................................................... 36 
+3.5.2 Step-by-Step QR Code Generation Process ................................................... 37 
+3.5.3 Rationale for Choosing HMAC-SHA256 ...................................................... 38 
+3.5.4 HMAC-SHA256 Mechanism Explained ....................................................... 39 
+--- PAGE 17 ---
+ 
+viii 
+3.5.5 QR Verification Process ................................................................................ 40 
+3.5.6 Configurable QR Expiry Window for High-Stakes Sessions ........................ 42 
+3.6 Security Mechanisms ............................................................................................ 43 
+3.6.1 Device Binding .............................................................................................. 43 
+3.6.2 JWT Authentication ....................................................................................... 43 
+3.6.3 Local Duplicate Prevention ........................................................................... 44 
+3.6.4 Server-Side Re-Validation ............................................................................. 44 
+3.6.5 Feasibility of a Future Biometric Confirmation Step .................................... 45 
+3.7 Backend API Design ............................................................................................. 47 
+3.8 Synchronisation Protocol ...................................................................................... 48 
+3.9 Development Environment and Tools .................................................................. 49 
+3.10 Experimental Evaluation Plan ............................................................................ 50 
+3.11 Ethical Considerations ........................................................................................ 51 
+3.12 Risk Management and Mitigation ....................................................................... 52 
+CHAPTER 4: RESULTS AND DISCUSSION.............................................................. 54 
+4.1 Results ................................................................................................................... 54 
+4.1.1 System Implementation Results ..................................................................... 54 
+4.1.2 Fraud Simulation Experiment Results ........................................................... 55 
+4.1.3 Synchronisation Reliability Experiment Results ........................................... 57 
+4.1.4 QR Code Validation Speed Results ............................................................... 59 
+4.1.5 App Stability Results ..................................................................................... 60 
+4.1.6 Comparison with Manual Attendance Results ............................................... 60 
+4.1.7 Cost-Benefit Analysis .................................................................................... 62 
+4.2 Discussion ............................................................................................................. 63 
+4.2.1 Discussion of Fraud Prevention ..................................................................... 63 
+4.2.2 Discussion of Synchronisation Results .......................................................... 64 
+4.2.3 Discussion of Usability Results ..................................................................... 65 
+--- PAGE 18 ---
+ 
+ix 
+4.2.4 Threats to Validity ......................................................................................... 66 
+4.2.5 Summary of Results Against Targets ............................................................ 67 
+CHAPTER 5: CONCLUSIONS AND RECOMMENDATIONS .................................. 69 
+5.1 Conclusions ........................................................................................................... 69 
+5.1.1 Conclusion on Objective 1: QR Code Module .............................................. 69 
+5.1.2 Conclusion on Objective 2: Offline-First Mobile Application ...................... 69 
+5.1.3 Conclusion on Objective 3: Security Mechanisms ........................................ 70 
+5.1.4 Conclusion on Objective 4: Synchronisation Protocol .................................. 70 
+5.1.5 General Conclusion ........................................................................................ 71 
+5.2 Recommendations ................................................................................................. 73 
+REFERENCES ............................................................................................................... 76 
+APPENDICES ................................................................................................................ 78 
+Appendix A: QR Payload Verification Algorithm  Step-by-Step Pseudocode .......... 78 
+Appendix B: Database Schema  Key Tables .............................................................. 79 
+Appendix C: Budget and Cost Estimate ..................................................................... 82 
+Appendix D: Project Schedule Gantt Chart ................................................................ 82 
+Appendix E: Sample Attendance Report .................................................................... 83 
+Appendix F: Requirements Elicitation Interview Guide ............................................ 83 
+Appendix G: Informed Consent Script Used in the Fraud Simulation Experiment ... 84 
+Appendix H: Source Code Excerpts  QR Signing and Verification ........................... 85 
+ 
+ 
+--- PAGE 19 ---
+ 
+1 
+CHAPTER 1: INTRODUCTION 
+1.1 Background and Statement of the Problem 
+Attendance recording is one of the most basic administrative tasks carried out by any 
+organisation that runs structured, cohort -based training. The records that an attendance 
+system produces serve several important purposes. Facilitators use them to track which 
+trainees are participating regularly in a programme. Programme administrators use them 
+to enforce minimum attendance policies that determine whether a trainee can sit for a 
+final assessment or receive a completion certificate. At the end of a trainin g cycle, these 
+records are consulted when decisions are made about certification, refunds, or continued 
+sponsorship for trainees who are on scholarship. They also form part of the evidence used 
+whenever a dispute arises between a trainee and the organisati on over whether a session 
+was actually attended. For all of these reasons, attendance records must be accurate and 
+trustworthy. 
+CivilSalt Bamenda is a Bamenda -based technology company that, alongside its 
+commercial software, hardware, automation, and renewable -energy activities, runs 
+structured cohort-based training programmes in web development, graphics design, and 
+related computing skills for young people in the North West Region of Cameroon. Each 
+training programme is organised into cohorts, and each cohort follows a timetable of in -
+person training sessions held in the organisation's training halls. At the start of every 
+session, attendance is currently recorded using a paper register: a sheet of paper or a 
+booklet that is passed around the training hall at the start of a session. Each trainee who 
+is present writes their name, their trainee identification number, and signs the sh eet. The 
+register is then returned to the facilitator and filed. 
+This method has several serious problems. The most important is proxy attendance, which 
+occurs when one trainee signs the register on behalf of a colleague who is not actually in 
+the room. The absent trainee could be anywhere while a friend signs in on the ir behalf. 
+This kind of cheating is common in institutions that rely on manual sign -in sheets 
+generally. Idris et al. (2017) studied proxy attendance in higher -education and training 
+settings and found that it affects between 30 and 40 per cent of all reco rded sessions in 
+institutions that rely on manual registers. This means that in a typical training cohort, 
+nearly one in three attendance records may be incorrect because of proxy signing, a figure 
+--- PAGE 20 ---
+ 
+2 
+that directly undermines any certification or sponsorship decision built on top of those 
+records. 
+Paper registers also have problems beyond deliberate cheating. A register can be lost or 
+damaged, destroying weeks of attendance data for an entire cohort. Handwriting is 
+sometimes illegible, making it impossible to identify which trainee signed a given ro w. 
+Trainees sometimes sign in the wrong row, accidentally altering the record for someone 
+else. The data in a paper register cannot easily be searched, sorted, or analysed without 
+manually transferring it to a computer, a process that takes a considerable amount of staff 
+time at CivilSalt Bamenda and introduces the possibility of transcription errors at the 
+point of data entry. 
+Digital attendance systems have been developed to address these problems. One category 
+of digital system that has attracted a great deal of attention in recent years uses QR codes. 
+In a QR code attendance system, the facilitator displays a QR code on a projector screen 
+or on their own phone, and trainees scan the code with their own phones to record their 
+attendance. This is faster than passing a paper register and, in principle, harder to cheat 
+because a trainee cannot sign on behalf of someone who is not physically present in the 
+training hall. 
+However, the QR code systems that have been published in the research literature all 
+share one critical weakness: they require the trainee's phone to communicate with a server 
+at the exact moment of scanning. Salleh et al. (2017) and Ibrahim et al. (2019) both 
+describe systems of this type, and both require real -time server connectivity for every 
+single scan. If the internet connection is unavailable at the moment a trainee tries to scan, 
+the scan simply fails and no attendance is recorded. 
+At CivilSalt Bamenda, as in many organisations across sub -Saharan Africa, internet 
+connectivity is not reliable. Adepoju and Shehu (2014) studied cloud computing and e -
+learning in African institutional environments and confirmed that internet outages are 
+frequent and often unpredictable. Mtebe et al. (2020) found that network failures directly 
+cause data loss and disruption in cloud-dependent information systems used at institutions 
+in East Africa, a situation that applies equally to West and Central Africa . At CivilSalt 
+Bamenda specifically, the wireless network in the training halls is often unavailable or 
+very slow during peak hours, particularly in the early morning and late afternoon when 
+many trainees and staff across several concurrent cohorts are com peting for the same 
+--- PAGE 21 ---
+ 
+3 
+shared connection. This makes any attendance system that requires internet connectivity 
+at the point of use fundamentally unreliable in this environment. 
+Biometric systems, such as those that use fingerprint readers or iris scanners, are another 
+type of digital attendance system. These can sometimes work without the internet because 
+the comparison is performed locally on the scanning device. However, they r equire 
+dedicated hardware in every training hall, and that hardware needs to be procured, 
+maintained, and eventually replaced when it fails. The cost is far beyond what a growing 
+technology training organisation such as CivilSalt Bamenda, which operates se veral 
+training halls simultaneously and is expanding its cohort intake, can justify for a purely 
+administrative function. Unar et al. (2014) reviewed biometric attendance systems and 
+confirmed that cost and infrastructure requirements remain the main barri ers to their 
+deployment in resource-constrained environments. 
+There is therefore a clear and pressing gap in the solutions currently available to 
+organisations such as CivilSalt Bamenda. What is needed is an attendance system that: 
+(i) does not require the internet at the moment attendance is recorded; (ii) prevents proxy 
+attendance without requiring expensive dedicated hardware; and (iii) keeps records safe 
+and correct even when a trainee's phone is offline for hours at a time. This project fills 
+that gap by designing, building, and evaluating exactly such a system, using CivilSalt 
+Bamenda's training programmes as the deployment and evaluation environment. 
+1.2 Rationale 
+The direct motivation for this project comes from the real problems experienced at 
+CivilSalt Bamenda, where the combination of unreliable internet and persistent proxy 
+attendance has made it difficult for programme staff to maintain accurate and trustworthy 
+attendance records across multiple concurrent cohorts. However, the rationale for the 
+project goes beyond solving a local operational problem at one organisation. 
+Looking at the research literature, there is a consistent pattern in every published QR 
+attendance system reviewed for this project: the system is built, it is shown to work under 
+normal laboratory conditions, and the paper reporting it is published withou t any 
+measurement of how well the system prevents fraud or how it behaves when the internet 
+is unavailable. Salleh et al. (2017) reported good usability scores from students and 
+lecturers but provided no data on fraud attempts blocked. Ibrahim et al. (2019 ) reported 
+--- PAGE 22 ---
+ 
+4 
+high scan accuracy but explicitly acknowledged that their system cannot function offline. 
+Neither paper provides the kind of experimental evidence that would allow a reader to 
+judge whether the system is actually effective at its primary job, which is keep ing 
+attendance records correct. 
+This absence of rigorous experimental evaluation is a genuine weakness in the published 
+literature. It means that organisations looking to adopt digital attendance systems cannot 
+make evidence -based procurement or deployment decisions, because most publish ed 
+systems have not been properly tested against explicit, measurable targets. This project 
+addresses that weakness directly by defining clear measurable targets before the system 
+is built, running controlled experiments at a real deployment site, and reporting the results 
+in enough detail that future researchers and practitioners can replicate and build on the 
+work. 
+The offline-first architectural approach and the HMAC -SHA256 QR-signing technique 
+used in this project are also relevant well beyond attendance systems. The same pattern 
+of local validation with background synchronisation can be applied to healthcare data 
+collection, agricultural extension reporting, field examination management, and any other 
+mobile information system that needs to work reliably in areas with poor connectivity. 
+This gives the technical contribution of the project a significance that extends beyond the 
+specific problem of attendance management at a single training organisation. 
+1.3 Research Questions 
+1.3.1 Main Research Question 
+To what extent can an offline-capable, QR code-based attendance system, incorporating 
+device-binding security and a verified synchronisation protocol, outperform existing 
+online QR code and manual attendance systems in terms of fraud prevention, 
+synchronisation reliability, and data integrity in a low-connectivity training environment 
+such as CivilSalt Bamenda? 
+ 
+ 
+--- PAGE 23 ---
+ 
+5 
+1.3.2 Specific Research Questions 
+1. How can QR code technology be used to create time-limited, fraud-resistant attendance 
+codes that a trainee's phone can fully validate without needing a server connection at the 
+point of scanning? 
+2. How can an offline -first local data storage system be implemented on an Android 
+mobile device to ensure that attendance records are reliably captured and preserved even 
+when the device has no internet connection? 
+3. What device-level and cryptographic security mechanisms can be combined to prevent 
+proxy attendance, and what measurable fraud detection rate can such mechanisms achieve 
+when tested in controlled experiments at CivilSalt Bamenda? 
+4. How can a background synchronisation protocol be designed to guarantee that offline 
+attendance records are reliably and accurately uploaded to the central server without 
+producing duplicates, even under the unstable network conditions typical of CivilSa lt 
+Bamenda's training halls? 
+1.4 Objectives 
+1.4.1 Overall Objective 
+The overall objective of the present project is to design, implement, and experimentally 
+evaluate an offline -capable smart attendance system using QR codes and secure 
+synchronisation for CivilSalt Bamenda, demonstrating measurable improvements over 
+existing solutions in fraud prevention, offline reliability, and data integrity. 
+1.4.2 Specific Objectives 
+The specific objectives are to: 
+1. Design and implement a QR code generation and scanning module that produces time-
+limited, HMAC -SHA256 cryptographically signed, session -specific codes that can be 
+fully validated on a trainee's mobile device without any server connectivity at the point 
+of scanning; 
+--- PAGE 24 ---
+ 
+6 
+2. Develop an offline-first mobile application capable of capturing, validating, and storing 
+attendance records locally using SQLite on the device, without requiring any server 
+connection during the attendance-recording process; 
+3. Implement and evaluate device -binding and duplication -prevention security 
+mechanisms, measuring their effectiveness through controlled proxy -attendance 
+simulation experiments covering four distinct attack strategies conducted with CivilSalt 
+Bamenda trainees; 
+4. Design, implement, and evaluate a secure background synchronisation protocol for 
+uploading locally stored records to the server, measuring synchronisation success rate, 
+average latency, and data integrity under simulated low-connectivity network conditions 
+derived from actual network availability patterns recorded at CivilSalt Bamenda. 
+1.5 Significance of the Study 
+1.5.1 Practical Significance 
+At the most immediate and practical level, this project gives CivilSalt Bamenda, and 
+technology training organisations like it, an affordable, ready -to-deploy solution for a 
+problem that directly affects programme integrity and certification decisions ever y day. 
+The only hardware required is the Android smartphone that most trainees already own. 
+No fingerprint scanners, dedicated barcode readers, or always-on internet connections are 
+needed. The total additional cost for CivilSalt Bamenda to deploy this sys tem is 
+essentially zero, since both the Django backend and the Flutter application are built 
+entirely from open-source tools. 
+The potential impact on programme integrity is significant. If proxy attendance affects 30 
+to 40 per cent of sessions under manual registers, as Idris et al. (2017) found, and if this 
+system reduces that figure to below 2 per cent, as the experimental resu lts in Chapter 4 
+suggest, the improvement in attendance data quality could affect certification and 
+sponsorship decisions for hundreds of trainees across CivilSalt Bamenda's cohorts every 
+year. 
+ 
+--- PAGE 25 ---
+ 
+7 
+1.5.2 Technical Significance 
+At the technical level, the combination of offline -first architecture, HMAC -SHA256 
+signed QR codes, device UUID binding, and idempotent synchronisation within a single 
+integrated system is a novel contribution. Each of these individual techniques exists in  
+the literature, but no published work reviewed for this project has combined all four 
+together and evaluated the combined system against explicit, measurable targets at a real 
+deployment site. The specific implementation choices made in this project, including the 
+use of Flutter for cross-platform development, Django REST Framework for the backend, 
+and SQLite for local storage, are also well suited to the resource and skill constraints of 
+developers working in sub-Saharan African technology organisations. 
+1.5.3 Scientific Significance 
+At the scientific level, this project contributes a replicable experimental evaluation 
+methodology. The eight metrics defined in the evaluation plan in Section 3.10, their 
+measurement methods, and the minimum targets set for each, provide a benchmark 
+framework that future researchers can use when evaluating similar systems. This is a 
+particularly important contribution given the near -total absence of standardised 
+evaluation criteria in the existing QR attendance literature. The detailed results reported 
+in Chapter 4 provide enough information for other researchers to replicate the 
+experiments at their own deployment sites and compare their systems against the same 
+benchmarks. 
+1.6 Scope and Delimitation of the Study 
+The scope of this project covers the complete lifecycle of an attendance record: session 
+creation by a Facilitator, cryptographically signed QR code generation, on -device 
+scanning and validation by a Trainee, local storage while offline, and background 
+synchronisation to a central server once connectivity is restored. It covers two mobile -
+application roles, Facilitator and Trainee, together with the Administrator functions 
+needed to support device rebinding and integrity review. The system was designed, 
+implemented, and evaluated specifically for deployment at CivilSalt Bamenda, and the 
+fraud simulation, synchronisation reliability, and comparative evaluation experiments 
+--- PAGE 26 ---
+ 
+8 
+reported in Chapter 4 were all conducted at that organisation with its facilitators and 
+trainees. 
+Several things are deliberately placed outside the scope of this project. The system does 
+not handle billing, invoicing, or payment tracking for training fees, which remain the 
+responsibility of CivilSalt Bamenda's existing administrative processes. It doe s not 
+manage training content, course materials, or assessment scoring; its only concern is the 
+fact and time of physical presence at a session. It does not attempt to integrate with any 
+national identity verification system, and the trainee identifiers used are internal CivilSalt 
+Bamenda registration numbers rather than any government -issued identifier. Finally, as 
+clarified in Section 5.1.5, the system was implemented and tested for Android only; no 
+iOS build or iOS-specific background execution logic was developed, and no claims are 
+made in this report about behaviour on Apple devices. 
+The delimitation of the evaluation itself is equally important to state plainly. As discussed 
+at length in Section 5.1.5, the experiments reported in Chapter 4 were conducted within 
+a single organisation, CivilSalt Bamenda, using a single cohort of 40 trainees for the direct 
+comparative evaluation against paper registers, although the fraud simulation and 
+synchronisation experiments drew on a wider set of controlled trials within that same 
+organisation. The findings should therefore be read as strong eviden ce that the system 
+works as intended in this specific, representative low-connectivity training environment, 
+rather than as a claim that has already been statistically validated across multiple 
+organisations, class sizes, or national contexts. 
+1.7 Organisation of the Report 
+The remainder of this report is organised into four further chapters. Chapter 2 reviews the 
+existing literature on attendance management systems, QR code technology, offline-first 
+application architecture, fraud prevention in digital attendance systems, an d the 
+cryptographic foundations of HMAC -SHA256, concluding with a comparative analysis 
+that identifies the specific gaps this project addresses. 
+Chapter 3 presents the materials and methods used, beginning with the overall research 
+design, followed by a complete Software Requirements Specification covering functional 
+and non-functional requirements, a requirements traceability matrix, and the use c ase, 
+class, object, and sequence models derived from those requirements. It then describes the 
+--- PAGE 27 ---
+ 
+9 
+system architecture, the mobile application design for both the Facilitator and Trainee 
+roles, the step -by-step QR code generation and verification process together with the 
+rationale for choosing HMAC -SHA256 and a detailed explanation of its cryptographic  
+mechanism, the further security mechanisms that complement QR signing, the backend 
+API design, the synchronisation protocol, the development environment, and the 
+experimental evaluation plan. 
+Chapter 4 presents the results of the three experiments described in the evaluation plan, 
+namely the fraud simulation, the synchronisation reliability test, and the comparative 
+evaluation against manual paper attendance, together with a discussion of what these 
+results mean, how they compare with the existing literature, and the limitations that 
+qualify how far they can be generalised. 
+Chapter 5 concludes the report by revisiting each of the four specific objectives in light 
+of the results obtained, drawing an overall conclusion on the main research question, and 
+setting out concrete recommendations for deployment and future development, including 
+the specific corrections requested by the supervisory panel prior to public defence. 
+--- PAGE 28 ---
+ 
+10 
+CHAPTER 2: LITERATURE REVIEW 
+2.1 Overview of Attendance Management Systems 
+The management of attendance in academic and training institutions has changed 
+significantly over the past three decades. Researchers have traced this change through 
+three distinct generations of systems, each attempting to solve the problems left behind 
+by the one before it. 
+The first generation relied on paper registers. A register was passed around the training 
+hall or classroom at the start of each session for participants to sign. This approach is 
+simple, costs almost nothing to set up, and requires no technology at all. H owever, its 
+problems are well documented. Idris et al. (2017) studied attendance fraud in Nigerian 
+higher education institutions and found that proxy attendance, where one participant signs 
+for an absent colleague, affects between 30 and 40 per cent of all  recorded sessions in 
+institutions that use paper registers. Beyond fraud, paper registers create practical 
+problems: records can be lost or damaged, handwriting is sometimes illegible, data cannot 
+easily be searched or summarised, and staff must manually transfer paper records into 
+computer systems at the end of each training cycle, introducing the possibility of 
+transcription errors at every step. 
+The second generation used barcode scanners and local area network (LAN) systems. 
+Each participant was given a barcode card, and a scanner at the entrance to the room 
+recorded attendance when the card was swiped. These systems improved accuracy and 
+reduced some forms of cheating, but they required expensive hardware, a permanent 
+power supply, and a reliable local network in every room. In developing countries, these 
+requirements made second -generation systems difficult and expensive to maintain, and 
+swapping a barcode card with a colleague who then scans it at the door remained a 
+straightforward way to commit proxy attendance without any technical skill. 
+The third generation moved to cloud-based systems accessible through participants' own 
+smartphones. Adepoju and Shehu (2014) reviewed cloud -based e -learning and 
+information systems in African institutional environments and found that the shift to the 
+cloud brought important benefits: records could be accessed from anywhere, reports could 
+be generated automatically, and the data was no longer at risk of being lost in a fire or 
+--- PAGE 29 ---
+ 
+11 
+flood. However, the move to the cloud also introduced a dependency that proved to be a 
+serious problem in African institutional environments specifically: every operation 
+required a stable internet connection. If the internet went down, the system stopped 
+working entirely. 
+Salau et al. (2019) conducted a detailed review of mobile attendance systems deployed in 
+Nigerian universities, a connectivity context very similar to that experienced by 
+technology training organisations in Bamenda such as CivilSalt Bamenda. They found 
+that every single system reviewed assumed continuous and reliable internet connectivity. 
+None of them described any mechanism for operating offline or for recovering gracefully 
+when the network was unavailable. Salau et al. noted that this was a fundamental design 
+limitation that made these systems unreliable in the very environments where they were 
+needed most, a finding that motivates the offline-first approach adopted in this project. 
+2.2 QR Code Technology in Institutional and Training Settings 
+QR codes, which stands for Quick Response codes, are two -dimensional barcodes that 
+can encode text, URLs, or other data. They were originally developed in Japan for 
+tracking automotive parts but became widely used for general data sharing after 
+smartphones with cameras became common. A QR code can store hundreds of characters 
+of text and can be scanned from a distance of several metres using an ordinary smartphone 
+camera. 
+QR code attendance systems work by having a facilitator generate and display a QR code 
+at the start of each session. The code encodes something that identifies the specific 
+session, such as the session identifier or the training programme code and date. 
+Participants open an app on their phones and scan the code. If the scan is accepted, their 
+attendance is recorded. 
+This approach has several attractive properties for institutional attendance. No special 
+scanning hardware is needed, because every participant already has a smartphone with a 
+camera. The process is faster than passing a paper register around a large room.  And, in 
+principle, a participant cannot sign for an absent colleague, because the absent colleague 
+is not physically in the room to scan the code. 
+--- PAGE 30 ---
+ 
+12 
+Ibrahim et al. (2019) built and tested a QR attendance system in a Malaysian university. 
+Their system encoded the course code and the current timestamp into the QR code and 
+achieved a scan accuracy of 98.7 per cent under normal lecture room lighting conditions. 
+This is an impressive result that shows QR codes are technically reliable for this use case. 
+However, Ibrahim et al.'s system required the student's phone to send the scanned data to 
+a server for validation every time a student scanned. The server then checked whether the 
+code was valid and recorded the attendance in the central database. If the server was 
+unavailable or the network was down, the scan simply failed. 
+Salleh et al. (2017) developed another QR attendance system and evaluated its usability 
+with both lecturers and students. Their results were positive: participants found the system 
+easy to use and faster than paper registers. However, like Ibrahim et al.'s  system, Salleh 
+et al.'s implementation depended on a live server connection for every scan. The paper 
+does not discuss what happens when the network is unavailable. 
+Both of these systems also share a security weakness that the present project specifically 
+addresses. Because the QR code simply encodes a session identifier without any 
+cryptographic protection, a participant who photographs the QR code can share the image 
+with an absent colleague through WhatsApp or any other messaging app. The absent 
+colleague can then display the image on their own phone screen and have someone scan 
+it, or screenshot it and scan it themselves later. This kind of attack is easy to carry out and 
+is not blocked by either of the systems reviewed above. 
+Zorkadis et al. (2015) studied the security risks in QR code applications more generally 
+and identified three main vulnerabilities relevant to attendance systems: QR code 
+interception, where a participant captures and shares the code; replay attacks, where  a 
+previously captured code is used again after the session has ended; and code forgery, 
+where a participant creates their own QR code that mimics the genuine one. The present 
+project addresses all three of these vulnerabilities through the combination of HMAC-
+SHA256 signing and time-limited expiry, described in detail in Section 3.5. 
+2.3 Offline-First Application Architecture 
+Offline-first is a philosophy for building software applications where the device's own 
+local storage is treated as the primary data source, rather than a remote server. In an 
+offline-first application, all the core functions of the app continue to work re gardless of 
+--- PAGE 31 ---
+ 
+13 
+whether the device has an internet connection. The server is used for synchronisation, 
+backup, and sharing data between devices, but it is never required for the basic operation 
+of the app. 
+Kleppmann and Beresford (2019) provided a thorough theoretical and practical 
+foundation for offline-first design. They argued that treating the local device as the source 
+of truth, and the server as a secondary store that is updated when convenient, leads to 
+applications that are more reliable, more responsive, and better suited to real -world 
+connectivity conditions. Their work introduced the concept of Conflict -Free Replicated 
+Data Types (CRDTs), which are data structures that allow multiple devices to mod ify 
+data independently and then merge their changes automatically without producing 
+conflicts. 
+The most common technology for local data storage in offline -first mobile applications 
+is SQLite. SQLite is a relational database engine that is embedded directly into the 
+application. It stores all its data in a single file on the device and does not requ ire a 
+separate database server process. This makes it extremely lightweight and reliable. 
+Koskinen et al. (2021) tested SQLite performance on mid -range Android smartphones 
+and found that it can handle more than 10,000 write operations per second, performan ce 
+that is far greater than needed for an attendance system, where a typical training session 
+at an organisation such as CivilSalt Bamenda might produce 30 to 60 records. 
+The main technical challenge in any offline-first system is deciding what to do when the 
+same data has been modified on two different devices while both were offline. For 
+general-purpose applications, such as collaborative document editors, this conflict 
+resolution problem is very complex. However, for an attendance system, the problem is 
+much simpler. Each attendance record represents a single unique event: one specific 
+trainee scanning one specific QR code at one specific moment. This event either happened 
+or it did not. There is no meaningful way for the same event to be recorded differently on 
+two different devices, so the conflict resolution problem reduces to simple duplicate 
+detection. The approach used in this project is to assign each record a uniqu e identifier, 
+called an idempotency key, that encodes the trainee's device UUID, the session identifier, 
+and the scan timestamp. Any record submitted to the server with the same idempotency 
+key as an existing record is automatically treated as a duplicate and discarded without an 
+--- PAGE 32 ---
+ 
+14 
+error. This is simpler than CRDTs and works equally well for this specific use case, as 
+Kleppmann and Beresford (2019) themselves acknowledged for event-log style data. 
+2.4 Fraud Prevention in Digital Attendance Systems 
+Preventing proxy attendance is the central security challenge for any digital attendance 
+system. Idris et al. (2017) conducted a comprehensive study of proxy attendance in 
+Nigerian higher education institutions. They identified the main methods that participants 
+use to cheat digital systems: sharing a screenshot of the QR code through messaging apps, 
+using screen mirroring software to project a QR code from one phone onto another, 
+physically handing a registered device to an absent colleague, and manually e ntering 
+attendance data into a system that does not properly authenticate the submitting device. 
+This project refers to this last category, physically lending a registered phone to an absent 
+colleague so that colleague can complete a valid scan, as a phone -lending attack, and 
+treats it as the hardest of the four strategies to defeat because the phone itself, and not 
+merely the QR image, is what is shared. 
+Idris et al. (2017) also evaluated several countermeasures. GPS geofencing, which 
+requires the participant's phone to be within a certain distance of the training room, is 
+effective against remote proxy attempts but can be defeated by sharing a device between 
+two people who are both physically near the room. Biometric verification, which checks 
+a fingerprint or face scan at the time of recording attendance, is very effective and 
+achieves near-zero proxy rates, but requires hardware or platform capability th at is not 
+guaranteed to be present or affordable in every deployment. Device fingerprinting, which 
+ties an attendance record to a specific device identifier, was identified as a promising 
+middle ground: it is cheap, requires no special hardware, and is effective against the most 
+common forms of proxy cheating, though, as this project's own fraud simulation later 
+confirms in Section 4.1.2, it is not by itself sufficient to close the phone -lending gap 
+entirely. 
+Arora et al. (2021) developed a mobile authentication system based on device 
+fingerprinting that used a combination of hardware identifiers to create a unique signature 
+for each device. They tested their system against attempts to spoof the device identity and 
+found a false-acceptance rate below 0.3 per cent, meaning that in more than 99.7 per cent 
+of cases an attempt to use a different device was correctly identified and blocked. Arora 
+--- PAGE 33 ---
+ 
+15 
+et al. concluded that device fingerprinting is a practical and effective fraud prevention 
+measure that can be implemented using software alone. 
+For QR attendance systems specifically, the most practical implementation of device 
+binding is to use the device UUID, a unique identifier assigned to each Android device. 
+The UUID is read using the operating system's device information API and stored in 
+association with the user's account when they first log in. Every subsequent attendance 
+record includes the UUID of the device that created it, and any record with a UUID that 
+does not match the registered device is rejected. 
+Time-limited QR codes add a second layer of protection on top of device binding. Ibrahim 
+et al. (2019) showed that making QR codes expire after a short time window effectively 
+blocks screenshot-based proxy attacks. Even if a participant shares a screenshot  of the 
+QR code through WhatsApp, the code will have expired by the time an absent colleague 
+receives it and tries to scan it, especially if the recipient is not physically in or near the 
+training hall. The combination of time-limited codes and device binding together blocks 
+all the purely software-based attack strategies identified by Idris et al. (2017), although, 
+as discussed later in Section 3.5.6 and Section 4.2.1, the length of the expiry window itself 
+has a direct and measurable effect on how much ti me a phone -lending attacker has 
+available, which is why this project treats the expiry window as a configurable security 
+parameter rather than a fixed constant. 
+2.5 Cryptographic Security: HMAC-SHA256 
+HMAC stands for Hash -based Message Authentication Code. It is a cryptographic 
+technique that uses a secret key to produce a fixed-length signature for any piece of data. 
+The signature can only be reproduced by someone who knows the secret key. This 
+property makes HMAC useful for verifying that a piece of data has not been altered and 
+that it was created by someone who possesses the secret key. 
+SHA-256 is a member of the Secure Hash Algorithm family. It produces a 256 -bit, 32-
+byte output that is computed from any input using a series of mathematical operations. 
+The same input always produces the same output. It is computationally infeasible to 
+reverse the process and find an input that produces a given output, or to find two different 
+inputs that produce the same output. These properties make SHA -256 a reliable 
+foundation for security applications. 
+--- PAGE 34 ---
+ 
+16 
+HMAC-SHA256 combines these two techniques. To compute an HMAC -SHA256 
+signature, the sender needs the data to be signed and a secret key. The algorithm applies 
+the SHA-256 hash function twice, in a specific way that incorporates the key in both 
+rounds, to produce a 64-character hexadecimal signature. If even a single character in the 
+data changes, or if the correct secret key is not available, the same signature cannot be 
+reproduced. This makes HMAC -SHA256 ideal for signing QR codes in an attendance 
+system, because it means a trainee who intercepts or photographs a QR code cannot create 
+their own valid code without knowing the session secret. The full mechanics of the 
+HMAC-SHA256 computation, and the specific reasons this algorithm was chosen over 
+the alternatives considered for this project, are presented in detail in Section 3.5.3 and 
+Section 3.5.4. 
+HMAC-SHA256 is widely used in real -world security systems. It is the basis for JSON 
+Web Tokens (JWT), which are used in this project for user authentication. It is also used 
+to verify the integrity of software downloads, to authenticate API requests, and to protect 
+messages in many communication protocols. Its security properties are well established 
+and it is implemented in every major programming language, including Dart, used for 
+Flutter, and Python, used for Django. 
+2.6 Comparative Analysis of Existing Systems 
+To situate the proposed system within the range of existing solutions, Table 2.1 presents 
+a structured comparison across seven evaluation criteria. The four approaches compared 
+are: traditional paper-based attendance registers, online QR code systems as described by 
+Salleh et al. (2017) and Ibrahim et al. (2019), biometric systems as reviewed by Unar et 
+al. (2014), and the system developed in this project. 
+The seven criteria chosen for comparison reflect the most important requirements for an 
+attendance system in the CivilSalt Bamenda environment. Offline capability measures 
+whether the system can function without an internet connection. Fraud resistance 
+measures how well the system prevents proxy attendance. Hardware cost reflects whether 
+the system requires any equipment beyond what trainees and facilitators already own. 
+Internet dependency measures how much of the system's normal operation requires 
+network connectivity. Scalability reflects how well the system handles large numbers of 
+trainees and sessions across concurrent cohorts. Data integrity reflects how reliably the 
+--- PAGE 35 ---
+ 
+17 
+system keeps records accurate and free of duplicates or errors. Evaluation metrics reflects 
+whether the system's effectiveness has been measured and reported with quantitative data. 
+Criterion Manual (Paper) Online QR Biometric Proposed System 
+Offline capability Yes (always) No Partial Yes, fully offline 
+Fraud resistance Low Medium High High 
+Hardware cost Very low Low High Low (phone only) 
+Internet 
+dependency None Full Full Sync only 
+Scalability Low High Medium High 
+Data integrity Low High High High 
+Evaluation metrics None Limited Accuracy rate Multi-metric 
+Table 2.1 shows clearly that the proposed system is the only approach that achieves both 
+high fraud resistance and full offline capability without requiring expensive hardware. 
+Every other approach that offers high fraud resistance, namely biometrics, requ ires 
+hardware that is impractical in the CivilSalt Bamenda context. Every approach that can 
+be deployed cheaply, namely paper or online QR, either has low fraud resistance or cannot 
+work offline. The proposed system addresses all three requirements simultaneously. 
+The proposed system is also the only one in this comparison with a formal multi -metric 
+evaluation plan. Manual attendance systems have never been evaluated against defined 
+quantitative targets for fraud prevention. Online QR systems have been evaluated for  
+usability and scan accuracy but not for fraud detection rates or offline performance. 
+Biometric systems report accuracy rates for the biometric matching itself but not for 
+whole-system fraud prevention as measured against a range of attack strategies. The  
+evaluation methodology described in Chapter 3 and the results reported in Chapter 4 
+represent a more complete and rigorous assessment than has been reported for any of the 
+other systems in this comparison. 
+2.7 Theoretical Framework 
+This project is informed by two complementary theoretical perspectives: the Technology 
+Acceptance Model, which explains why users choose to adopt or resist a new information 
+system, and the offline-first design philosophy already introduced in Section 2.3,  which 
+--- PAGE 36 ---
+ 
+18 
+explains how such a system should be architected to remain reliable in the specific 
+connectivity conditions found at CivilSalt Bamenda. 
+The Technology Acceptance Model, originally proposed by Davis (1989) and widely 
+used since in information systems research, holds that a user's intention to adopt a new 
+system is shaped primarily by two beliefs: perceived usefulness, meaning the degree to 
+which the user believes the system will improve their task performance, and perceived 
+ease of use, meaning the degree to which the user believes the system will require little 
+effort to operate. Applied to this project, perceived usefulness corresponds to a 
+Facilitator's belief that the system genuinely reduces the time and fraud risk associated 
+with attendance recording, and a Trainee's belief that scanning a QR code is a faster and 
+more dependable way to confirm their presence than signing a paper registe r. Perceived 
+ease of use corresponds to how simple the scanning and confirmation flow feels in 
+practice, given that Facilitators and Trainees at CivilSalt Bamenda cannot be assumed to 
+have any formal technical training beyond ordinary smartphone familiarity. 
+The Technology Acceptance Model directly motivated two concrete design decisions 
+described in Chapter 3. First, the emphasis in Section 3.4 on keeping the Trainee -facing 
+scanning flow to a single camera action followed by an on -screen confirmation, with no 
+additional steps such as manual code entry or extra confirmation screens, was intended to 
+maximise perceived ease of use. Second, the decision to make the offline validation 
+process invisible to the user, so that the scanning experience feels identical wh ether or 
+not the phone has a network connection, was intended to maximise perceived usefulness 
+by removing the single biggest source of frustration identified in the comparable systems 
+reviewed in Section 2.2, namely failed scans caused by unavailable conn ectivity. The 
+usability ratings reported in Section 4.1.6 and discussed in Section 4.2.3, of 4.6 out of 5 
+for Facilitators and 4.4 out of 5 for Trainees, provide empirical support for the 
+effectiveness of these design choices in Technology Acceptance Model  terms, and the 
+qualitative feedback summarised in that discussion, particularly the trainee comments 
+about the certainty provided by the immediate on-screen confirmation, maps closely onto 
+the perceived usefulness construct. 
+The offline-first perspective, meanwhile, provides the architectural theory that underpins 
+the entire system design in Chapter 3, and is treated here as complementary to, rather than 
+in competition with, the Technology Acceptance Model: an application can only be 
+--- PAGE 37 ---
+ 
+19 
+perceived as useful and easy to use in an environment such as CivilSalt Bamenda if it 
+remains functional when the network is unavailable, since a Facilitator or Trainee who 
+experiences repeated failed scans during a real session will rapidly form a negativ e 
+usefulness belief regardless of how well the interface itself is designed. The two 
+theoretical perspectives therefore operate at different levels of the same design problem: 
+the offline -first architecture is the technical precondition that makes favourab le 
+technology acceptance possible in this specific connectivity context, and the Technology 
+Acceptance Model constructs are the lens through which the resulting user experience 
+was evaluated in Section 4.1.6. 
+2.8 Gaps in Existing Research 
+The review of the literature above reveals three clear and consistent gaps that this project 
+addresses. 
+The first gap is the absence of any published attendance system that combines full offline 
+operation, time -limited QR validation, device -binding fraud prevention, and conflict -
+aware synchronisation in a single integrated design. As Table 2.1 shows, differe nt 
+systems address some of these requirements but none addresses all four together. Systems 
+that provide offline capability do not address fraud. Systems that prevent fraud assume 
+continuous internet connectivity. Systems that implement QR attendance have no offline 
+fallback. 
+The second gap is the lack of rigorous experimental evaluation in the published literature. 
+Ibrahim et al. (2019) measured scan accuracy but not fraud prevention. Salleh et al. (2017) 
+measured user satisfaction but not synchronisation reliability or data i ntegrity. Neither 
+paper defines minimum performance targets before building the system and then reports 
+measured results against those targets. This project fills that gap with the eight -metric 
+evaluation framework described in Chapter 3. 
+The third gap is the absence of systems designed specifically for the connectivity and 
+resource constraints of sub -Saharan African institutional environments. Most published 
+systems were designed and tested in contexts where internet connectivity is reliab le and 
+hardware procurement is straightforward. The present project was designed from the 
+beginning with the specific conditions at CivilSalt Bamenda in mind, and the 
+experimental evaluation used connectivity profiles derived from actual network 
+--- PAGE 38 ---
+ 
+20 
+availability data recorded at CivilSalt Bamenda rather than from laboratory simulations 
+of ideal conditions. 
+--- PAGE 39 ---
+ 
+21 
+CHAPTER 3: MATERIALS AND METHODS 
+3.1 Research Design 
+This project used Design Science Research Methodology, commonly referred to as 
+DSRM, as defined by Hevner et al. (2004). DSRM is the appropriate research method 
+when the goal is to create and evaluate a new technological system. It differs from purely 
+empirical research methods, which observe and measure things that already exist, by 
+treating the creation of the system itself as a core research contribution. DSRM proceeds 
+through six iterative activities: identifying the problem and motivating the research,  
+defining what the solution needs to achieve, designing and developing the system, 
+demonstrating that the system works, evaluating how well it meets its objectives, and 
+communicating the results to others. 
+The evaluation phase of this project was planned and designed before any code was 
+written. This is an important distinction from the common approach in engineering 
+projects of first building the system and then testing it to see what it can do. By defining  
+the metrics and minimum performance targets in advance, as shown in Table 3.6, the 
+evaluation becomes an objective test of the system rather than a demonstration of its best-
+case performance. This approach directly addresses the weakness identified in Sec tion 
+2.7 of the literature review, where existing systems were typically evaluated informally 
+and without pre-defined performance targets. 
+Three separate experiments formed the evaluation phase. The first was a fraud simulation 
+experiment in which controlled proxy attendance attempts were made using four different 
+attack strategies, each attempted 30 times under supervised conditions. The second was a 
+synchronisation reliability experiment in which attendance records were created offline 
+under six different simulated connectivity profiles and then synchronised to the server. 
+The third was a direct performance comparison with manual paper -based attendance 
+conducted during five actual training sessions at CivilSalt Bamenda. All trainee 
+participants gave their informed consent before any experiment began, and all results 
+were recorded by the researcher without input from participants. 
+--- PAGE 40 ---
+ 
+22 
+3.2 Software Requirements Specification (SRS) 
+Before any design or implementation work began, a Software Requirements Specification 
+was developed to define, in a structured and verifiable way, exactly what the system must 
+do and the constraints under which it must operate. The SRS was written followin g the 
+general structure recommended by the IEEE 830 standard for software requirements 
+specifications, adapted to the scale of a single-developer academic project. It is presented 
+here step by step: purpose and scope, functional requirements, non -functional 
+requirements, the use case model, and the system design models that were derived directly 
+from the requirements captured below. 
+3.2.1 Purpose and Scope 
+The purpose of the system specified here is to replace the paper-based attendance register 
+currently used at CivilSalt Bamenda's training programmes with a mobile application that 
+records attendance through cryptographically signed, time -limited QR codes, validates 
+every scan entirely on the trainee's own device, and synchronises records to a central 
+server whenever connectivity becomes available. The scope of the system covers two 
+mobile-application roles, Facilitator and Trainee, a backend REST API, and t he data 
+stores needed to support both online and offline operation. The scope explicitly excludes 
+payroll, course-content delivery, and billing functions, which remain outside this project 
+and continue to be handled by CivilSalt Bamenda's existing administrative processes. 
+3.2.2 Functional Requirements 
+Table 3.1 lists the functional requirements elicited from structured interviews with the 
+field supervisor and with CivilSalt Bamenda training staff, together with direct 
+observation of three paper-register sessions conducted before development began. Each 
+requirement is assigned an identifier of the form FR -n so that it can be traced through 
+design and testing. 
+ 
+ 
+--- PAGE 41 ---
+ 
+23 
+ID Requirement Priority 
+FR-1 The system shall allow a Facilitator to create a training session for a specific 
+programme and cohort. High 
+FR-2 The system shall generate a QR code payload that is cryptographically signed 
+with HMAC-SHA256 and bound to a specific session. High 
+FR-3 
+The system shall display the current QR code on the Facilitator's device and 
+automatically refresh it when the configured expiry window elapses, without 
+requiring a server connection. 
+High 
+FR-4 The system shall allow a Trainee to scan a QR code using the device camera 
+and shall validate the scan entirely on the device without any server request. High 
+FR-5 The system shall reject a scanned code that fails signature verification, has 
+expired, was produced for a different session, or is malformed. High 
+FR-6 The system shall bind each Trainee account to exactly one registered device 
+and reject scans performed from an unregistered device. High 
+FR-7 The system shall prevent a Trainee from recording more than one attendance 
+entry for the same session on the same device. High 
+FR-8 The system shall store a validated attendance record locally on the device 
+when no network connection is available. High 
+FR-9 
+The system shall automatically detect the restoration of network connectivity 
+and synchronise all pending local records to the server without user 
+intervention. 
+High 
+FR-10 The system shall re-validate every synchronised record on the server, 
+independently of the validation already performed on the device. High 
+FR-11 
+The system shall silently discard duplicate records submitted more than once 
+during synchronisation, without creating a duplicate entry or returning an error 
+to the device. 
+High 
+FR-12 The system shall allow a Facilitator to view a report of attendance for a given 
+session or programme. Medium 
+FR-13 The system shall allow an Administrator to rebind a Trainee account to a new 
+device and shall retain a complete audit trail of the change. Medium 
+FR-14 The system shall log every rejected scan, together with the reason for 
+rejection, in an integrity log accessible to Administrators. Medium 
+FR-15 The system shall log any case in which the same Trainee and session are 
+recorded from two different devices, and shall flag it for Facilitator review. Medium 
+FR-16 The system shall allow the QR expiry window to be configured per session, 
+with a shorter default for sessions marked as high-stakes. High 
+--- PAGE 42 ---
+ 
+24 
+3.2.3 Non-Functional Requirements 
+Table 3.2 lists the non -functional requirements, which constrain how the functional 
+requirements above must be satisfied rather than what the system must do. 
+ID Requirement Category 
+NFR-1 
+All validation logic required to accept or reject a QR scan shall execute 
+on the Trainee's device in under 2 seconds on the lowest-specification 
+test device. 
+Performance 
+NFR-2 The system shall function with all core attendance-recording features 
+available for at least 100 consecutive offline sessions without failure. Reliability 
+NFR-3 The system shall detect at least 95 per cent of simulated proxy-attendance 
+attempts across the four attack strategies defined in Section 3.10. Security 
+NFR-4 The system shall synchronise at least 98 per cent of offline-created 
+records successfully within 30 seconds of connectivity being restored. Reliability 
+NFR-5 The system shall produce zero duplicate attendance records on the server 
+regardless of how many times a device retries a synchronisation batch. Data integrity 
+NFR-6 
+The mobile application shall run acceptably on Android devices from 
+API level 21 (Android 5.0) upward, covering low-cost devices typical of 
+CivilSalt Bamenda trainees. 
+Compatibility 
+NFR-7 All data in transit between the mobile application and the backend server 
+shall be encrypted using HTTPS. Security 
+NFR-8 Authentication tokens and the device-binding identifier shall be stored 
+only in the device's encrypted secure storage, never in plain text. Security 
+NFR-9 The system shall be built entirely from open-source frameworks and 
+libraries so that CivilSalt Bamenda incurs no licensing cost. Cost 
+NFR-
+10 
+The user interface shall be usable by a Facilitator or Trainee with no prior 
+training, evaluated through a five-point usability rating collected during 
+the comparative evaluation in Section 3.10. 
+Usability 
+3.2.4 Requirements Traceability Matrix 
+Table 3.3 maps each functional requirement to the design element that implements it and 
+the section of Chapter 4 where its satisfaction is evaluated, providing an audit trail from 
+requirement to implementation to evidence. 
+--- PAGE 43 ---
+ 
+25 
+Requirement Implementing Design Element Verified In 
+FR-1, FR-3 Session model, Facilitator interface (Section 
+3.4.1) Section 4.1.1 
+FR-2, FR-16 QR payload generation and HMAC-SHA256 
+signing (Section 3.5) Sections 4.1.2, 4.1.4 
+FR-4, FR-5 On-device verification pipeline (Section 
+3.5.5) Sections 4.1.2, 4.1.4 
+FR-6, FR-13 Device binding (Section 3.6.1) Section 4.1.2 
+FR-7, FR-8 Local duplicate prevention, SQLite storage 
+(Section 3.6.3) Sections 4.1.2, 4.1.5 
+FR-9, FR-11 Synchronisation protocol, idempotency key 
+(Section 3.8) Section 4.1.3 
+FR-10, FR-14, FR-15 Server-side re-validation (Section 3.6.4) Sections 4.1.2, 4.1.3 
+FR-12 Reporting endpoints (Section 3.7) Section 4.1.6 
+3.2.5 Use Case Model 
+Figure 3.2 presents the use case diagram derived from the functional requirements in 
+Table 3.1. Two primary actors interact directly with the system: the Facilitator, who 
+creates sessions and generates QR codes, and the Trainee, who scans codes and records  
+attendance. A System Administrator actor interacts with the reporting and device -
+rebinding functions. The scan -related use cases are modelled with include and extend 
+relationships to show that signature verification, expiry checking, and duplicate detection 
+are mandatory steps inside every scan, while fraud detection is an extension that is 
+triggered only when one of those checks fails. 
+ 
+ 
+ 
+ 
+ 
+ 
+--- PAGE 44 ---
+ 
+26 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Figure 3.2: Use case diagram of the attendance system at CivilSalt Bamenda 
+3.2.6 System Design Models 
+The three models presented in this subsection were derived directly from the functional 
+requirements and are used to guide the implementation described in the remainder of this 
+chapter: a class diagram showing the static structure of the domain, an object diagram 
+showing a concrete snapshot of that structure during a real session, and a sequence 
+diagram showing the dynamic behaviour of the system from QR generation through to 
+server-side confirmation. 
+Figure 3.3 shows the class diagram. The abstract User class captures the attributes and 
+behaviour common to both roles, and Facilitator and Trainee extend it with role -specific 
+attributes. A Facilitator creates Session objects within a TrainingProgram; eac h Session 
+generates one or more QRCode objects over its lifetime as codes expire and are refreshed. 
+A Trainee is bound to exactly one Device and produces AttendanceRecord objects, each 
+of which references the QRCode that validated it and the Device that created it. Pending 
+records are held in a SyncQueue until they are confirmed by the server. 
+ 
+ 
+ 
+
+--- PAGE 45 ---
+ 
+27 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Figure 3.3: Class diagram of the attendance system 
+Figure 3.4 shows an object diagram, which is a snapshot of specific instances of the 
+classes in Figure 3.3 at a single point in time: a real training session held at CivilSalt 
+Bamenda's Training Hall 1 on 14 July 2026, in which a Facilitator object representing the 
+field supervisor opens a session for the Web Development Bootcamp, generates a signed 
+ 
+ 
+
+--- PAGE 46 ---
+ 
+28 
+QR code with a five -minute expiry window, and a Trainee object records a pending 
+attendance entry that is waiting in the local sync queue. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Figure 3.4: Object diagram of a single attendance session at CivilSalt Bamenda 
+Figure 3.5 shows the sequence diagram for the complete flow from QR code generation 
+through scanning, on-device validation, local storage, and eventual server 
+synchronisation. This diagram is the definitive reference for the step-by-step QR code 
+generation and verification process described in narrative form in Section 3.5. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+--- PAGE 47 ---
+ 
+29 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Figure 3.5: Sequence diagram: QR generation, scan, local validation and synchronisation 
+ 
+ 
+
+--- PAGE 48 ---
+ 
+30 
+3.3 System Architecture 
+The system follows a three -tier client-server architecture. The three tiers are the mobile 
+client application running on Facilitators' and Trainees' Android phones, the backend 
+application server running on a cloud server, and two categories of database: o ne local 
+database on each device and one central database on the server. Figure 3.1 shows how 
+these three tiers connect to each other. 
+The mobile client was developed using Flutter, which produces Android applications 
+from a single Dart codebase. The backend server was implemented using the Django 
+REST Framework for Python. The local database on each device is SQLite, accessed 
+through the sqflite package for Flutter. The central server database is PostgreSQL. 
+ 
+Figure 3.1: Three-tier system architecture  mobile client, Django backend, and dual 
+databases 
+
+--- PAGE 49 ---
+ 
+31 
+The system operates in two clearly separated modes. In offline mode, all attendance 
+operations take place entirely on the mobile device. The Facilitator generates the QR code 
+locally using data cached from the last server connection. The Trainee scans the code, 
+and the phone validates it and saves the result to its local SQLite database. No network 
+request is made at any point. In online mode, the mobile client connects to the backend 
+through HTTPS for authentication, session registration, and data upload. The transition 
+between modes is detected automatically by a background network monitoring service, 
+and the user does not need to do anything when the connection changes. 
+3.4 Mobile Application Design and Development 
+The mobile application was built using Flutter version 3.22 with Dart as the programming 
+language. Flutter was chosen because it allows the same codebase to run on Android and 
+iOS, reducing future development effort if the system is extended to Apple devic es. The 
+minimum Android version supported is API level 21, which corresponds to Android 5.0. 
+This was chosen because it covers 98 per cent of Android devices currently in use in 
+Cameroon, according to Google Play distribution statistics, and matches the range of low-
+cost Android devices typically owned by CivilSalt Bamenda trainees. 
+The application architecture follows the Model -View-Controller (MVC) pattern. In the 
+MVC pattern, the Model layer contains the data classes and the logic for reading and 
+writing data. The View layer contains all the visual screens and user interface 
+components. The Controller layer sits between the Model and View, handling business 
+logic and state changes. This separation makes the code easier to test, easier to understand, 
+and easier to maintain over time. The Provider package was used to implement the 
+Controller layer, which allows the View layer to automatically update itself whenever the 
+underlying data changes. 
+3.4.1 Facilitator Interface 
+The Facilitator interface consists of five main screens: a dashboard showing statistics 
+about training programmes and sessions, a programme management screen for creating 
+and viewing programmes, a session creation screen, a session detail screen that shows the 
+live QR code, and a profile and settings screen. 
+--- PAGE 50 ---
+ 
+32 
+The session creation screen allows a Facilitator to select a training programme, enter an 
+optional venue and notes, choose whether the session is a standard session or a high -
+stakes session such as an end-of-cohort assessment, and create a new attendance session. 
+When the Facilitator taps the create button, the app sends a request to the backend server. 
+The server generates a cryptographically random session secret, computes the first QR 
+code payload, sets the expiry window according to the session type as described in Section 
+3.5.6, and returns all of this information to the Facilitator's app. The app then displays the 
+QR code on the session detail screen. 
+The session detail screen is the main working screen for a Facilitator during an active 
+session. It shows the QR code in the centre of the screen with a live countdown timer 
+beneath it. The timer counts down from the configured expiry window. When the time r 
+reaches zero, the app automatically generates a new QR code payload using the cached 
+session secret, without needing to contact the server. This means the QR code refresh 
+works even if the Facilitator's phone loses connectivity during a session. The screen also 
+shows the number of trainees who have scanned so far, which is updated in real time 
+when the phone is online and updated the next time the phone syncs when it is offline. 
+ 
+Figure 3.8a: Facilitator session detail screen with live QR code and countdown timer 
+
+--- PAGE 51 ---
+ 
+33 
+ 
+Figure 3.8b: Facilitator home dashboard showing programme and session statistics 
+3.4.2 Trainee Interface 
+The Trainee interface consists of five main screens: a home dashboard, a QR code scanner 
+screen, an attendance history screen, a programme list screen, and a profile screen. The 
+home dashboard shows the total number of attendance records, how many have bee n 
+synced, how many are still pending synchronisation, and a list of recent records. When 
+records are pending, the dashboard shows a warning banner with a button to trigger a 
+manual sync. 
+The scanner screen uses the mobile_scanner package to access the device camera. The 
+screen shows a custom overlay with corner guide marks that help the trainee point the 
+camera at the QR code. When a QR code is detected by the camera, the app runs the 
+validation process described in Section 3.5.5 immediately. The screen displays a 
+processing indicator during the short time this takes, and then shows a result sheet at the 
+bottom of the screen confirming whether attendance was recorded, whether the attempt 
+was a duplicate, or whether an error occurred. 
+
+--- PAGE 52 ---
+ 
+34 
+The key design principle behind the scanner screen is that every validation step runs 
+entirely on the phone. No network request is made. This means the scanner screen works 
+exactly the same way whether the phone has a full 4G connection or no connection at all. 
+ 
+Figure 3.9a: Trainee scanner screen showing camera overlay and scan result confirmation 
+
+--- PAGE 53 ---
+ 
+35 
+ 
+Figure 3.9b: Trainee attendance history records list with sync status indicators 
+ 
+
+--- PAGE 54 ---
+ 
+36 
+3.5 QR Code Generation and Verification 
+The QR code is the central security mechanism of the whole system. Its design must 
+satisfy three requirements simultaneously: it must encode enough information for the 
+Trainee's phone to identify the session and verify the code without contacting the server; 
+it must be impossible for a trainee to create or modify a valid code without knowing the 
+session secret; and it must expire automatically to limit the window of vulnerability if a 
+code is captured and shared. This section explains, step by step, exactly  how a QR code 
+is generated, why HMAC -SHA256 was chosen as the signing mechanism ahead of the 
+alternatives that were considered, how the HMAC-SHA256 mechanism itself works, and 
+how a code is verified once it reaches a Trainee's device. 
+3.5.1 QR Payload Structure 
+Every QR code in the system encodes a payload string that has exactly four parts, 
+separated by the pipe character. The four parts are the session identifier, the programme 
+code, the expiry timestamp, and the HMAC-SHA256 signature. The session identifier is 
+the UUID of the attendance session, which uniquely identifies which session this code 
+belongs to. The programme code is the code of the training programme associated with 
+the session. The expiry timestamp is a Unix timestamp, which is the number of second s 
+since 1 January 1970, representing the moment at which the code will stop being valid. 
+The signature is a 64 -character hexadecimal string computed by applying HMAC -
+SHA256 to the first three parts of the payload using the session secret as the key. 
+An example of a complete QR payload string would be: 
+3f2a1b4c-8e9d-4a2b-bc5e-
+1d2e3f4a5b6c|WDB07|1752480305|a3f9b2c1d4e5f6789012345678901234abcd5678ef9
+01234567890abcdef1234 
+When this string is encoded into a QR code and displayed on screen, trainees can scan it 
+with their phones. The phone decodes the string and then runs the verification process 
+described in Section 3.5.5. 
+ 
+ 
+--- PAGE 55 ---
+ 
+37 
+3.5.2 Step-by-Step QR Code Generation Process 
+The generation of a QR code proceeds through six discrete steps, each of which is 
+illustrated in the sequence diagram in Figure 3.5: 
+Step 1:  Session initialisation. When a Facilitator creates a session, the backend server 
+generates a cryptographically random 256 -bit session secret using Python's secrets 
+module, which draws from the operating system's cryptographically secure random 
+number generator. This secret is stored in the PostgreSQL database, associated with the 
+session, and is never transmitted to any Trainee device. A copy is sent once, over HTTPS, 
+to the Facilitator's own device, where it is cached in encrypted secure storage so that th e 
+Facilitator's app can regenerate QR codes locally if it loses connectivity. 
+Step 2: Payload assembly. The QR/HMAC engine on the Facilitator's device (or on the 
+server, for the very first code of a session) assembles the payload base by concatenating 
+the session identifier, the programme code, and an expiry timestamp computed as the 
+current time plus the configured expiry window, joined with pipe characters. 
+Step 3: Nonce and signature computation. Although the payload itself does not need a 
+separate nonce field because the expiry timestamp already changes on every refresh, the 
+reference implementation additionally derives an internal nonce from a monotonically 
+increasing refresh counter to guard against any theoretical replay of an identical 
+timestamp within the same second on a very fast refresh cycle. The payload base is then 
+signed using HMAC -SHA256 with the session secret as the key, as described 
+mechanically in Section 3.5.4, producing a 64-character hexadecimal signature. 
+Step 4: Payload finalisation. The signature is appended to the payload base as the fourth 
+pipe-separated field, producing the complete payload string shown in Section 3.5.1. 
+Step 5: QR image rendering. The complete payload string is encoded into a QR image 
+using the qr_flutter package, which implements the standard QR Code (ISO/IEC 18004) 
+encoding algorithm, and the resulting image is rendered on the Facilitator's screen. 
+Step 6: Automatic refresh. A countdown timer, driven entirely by the device's own clock, 
+tracks the time remaining until the expiry timestamp encoded in the current payload. 
+When the timer reaches zero, the application repeats Steps 2 to 5 automatically using the 
+cached session secret, without any server round-trip. This is what allows the QR code to 
+--- PAGE 56 ---
+ 
+38 
+keep refreshing throughout a long session even if the Facilitator's phone has no 
+connectivity at all. 
+3.5.3 Rationale for Choosing HMAC-SHA256 
+Several cryptographic mechanisms were considered for signing the QR payload before 
+HMAC-SHA256 was selected, and each alternative was rejected for a specific, concrete 
+reason relevant to this project's constraints. 
+A plain, unkeyed hash, such as SHA-256 applied directly to the payload without a secret 
+key, was rejected first. An unkeyed hash only proves that the payload has not been 
+accidentally corrupted; it does not prove who created it, because anyone, including a  
+Trainee attempting to forge a code, can compute the same hash for any payload they 
+choose. This would defeat the entire purpose of signing the code. 
+Symmetric encryption of the payload, for example using AES, was also considered. 
+Encryption would hide the payload contents from casual inspection, but it does not, by 
+itself, provide authentication: without a separate integrity check, encrypted data can 
+sometimes still be manipulated in ways that produce another validly -decryptable 
+message, and in this application the payload fields are not secret in the first place, since 
+the session identifier and programme code are already visible elsewhere in the 
+Facilitator's and Trainee's apps. Encryption would therefore add computational cost and 
+code complexity without solving the actual problem, which is authenticity, not 
+confidentiality. 
+Asymmetric digital signatures, such as RSA or ECDSA, were considered more seriously, 
+because they would allow the Trainee's device to verify a signature using only a public 
+key, without ever holding a secret that could be extracted from the device and used  to 
+forge codes for other sessions. This is a genuine advantage over HMAC in threat models 
+where the verifying device is untrusted. However, three practical factors weighed against 
+this choice for the present system. First, RSA and ECDSA signature verifica tion is 
+computationally more expensive than HMAC verification, which matters on the low-cost, 
+low-RAM Android devices, such as those with 2 GB of RAM, that make up part of the 
+CivilSalt Bamenda trainee population, and where Section 3.10 sets a strict two -second 
+scan-to-confirmation target. Second, asymmetric schemes require key-pair management, 
+certificate or key distribution, and rotation procedures that add operational complexity 
+--- PAGE 57 ---
+ 
+39 
+disproportionate to the actual threat this system needs to defend against, which is a 
+Trainee sharing or reusing a captured QR image, not a Trainee extracting a signing key 
+from another Trainee's phone. Third, because the party that needs to verify a QR co de is 
+the Trainee's own phone, and the phone that needs to trust the verification is the same 
+phone that later reports the result to the server for independent re -validation, the 
+asymmetric threat model of protecting a secret from an untrusted verifier doe s not 
+materially apply here: the secret that matters is the session secret held by the server and, 
+transiently, by the Facilitator's device, not a secret held by every Trainee device. 
+HMAC-SHA256 was ultimately chosen because it directly matches the actual threat 
+model. The entity that must be prevented from forging a code is the Trainee, and the entity 
+that must be able to verify a code without contacting the server is also, transientl y, a 
+device that possesses the session secret only in the sense that the Facilitator's device 
+caches it to keep generating fresh codes; ordinary Trainee devices never receive the 
+session secret at all, and instead carry the specific signed payloads that we re generated 
+using it. HMAC-SHA256 is computationally cheap, verified in well under a millisecond 
+even on the lowest-specification test device used in this project, is implemented natively 
+and efficiently in both Dart, for Flutter, and Python, for Django, has a long track record 
+of production use in systems such as JSON Web Tokens and API request signing, and 
+has no known practical cryptographic weaknesses when used with a sufficiently long, 
+randomly generated key, as is the case here with a 256-bit secret. It therefore provides the 
+authenticity and tamper -evidence the system needs, at a computational and operational 
+cost appropriate to the resource constraints of the deployment environment. 
+3.5.4 HMAC-SHA256 Mechanism Explained 
+Figure 3.7 (referenced conceptually here and shown as part of the QR/HMAC engine step 
+in Figure 3.5) illustrates how a signature is derived. HMAC, defined formally in RFC 
+2104, combines a cryptographic hash function, in this case SHA -256, with a secret key  
+through a specific two -pass construction that is designed to be resistant to length -
+extension attacks that would otherwise be possible if a key were simply prepended to the 
+message before hashing once. 
+The computation proceeds as follows. First, the secret key is padded or, if it is longer than 
+the hash function's internal block size of 64 bytes, hashed down and then padded, until it 
+--- PAGE 58 ---
+ 
+40 
+is exactly 64 bytes long. Second, this padded key is combined, using a bitwise exclusive-
+or operation, with a fixed constant block known as the inner pad, and the result is 
+concatenated with the message, in this case the QR payload base, and passed through  
+SHA-256 to produce an intermediate hash. Third, the padded key is combined, again 
+using exclusive-or, with a second fixed constant block known as the outer pad, and the 
+result is concatenated with the intermediate hash from the previous step and passed 
+through SHA-256 a second time. The output of this second hashing operation is the final 
+HMAC-SHA256 signature, expressed in this system as a 64 -character lowercase 
+hexadecimal string. 
+The security of this construction rests on two properties of SHA-256 discussed in Section 
+2.5: pre-image resistance, meaning it is computationally infeasible to find an input that 
+produces a given output, and collision resistance, meaning it is computationally infeasible 
+to find two different inputs that produce the same output. Because the key is mixed into 
+the computation twice, in both the inner and outer hashing rounds, an attacker who does 
+not know the key cannot compute a valid signature for a payload of their choosing, even 
+if they can observe many valid signature and payload pairs produced by the legitimate 
+system, which is exactly the situation a trainee is in after photographing several QR codes 
+over a training cycle. 
+On the Trainee's device, verification does not attempt to reverse the signature. Instead, 
+the device independently recomputes what the signature should be, using the payload it 
+just scanned and the session information it has cached, and compares the recomp uted 
+signature to the one printed inside the scanned payload using a constant -time string 
+comparison, which avoids leaking timing information that could theoretically assist an 
+attacker in guessing the correct signature one character at a time. If the two signatures 
+match exactly, the payload is accepted as authentic and unmodified. If they differ in even 
+a single character, the payload is rejected outright. 
+3.5.5 QR Verification Process 
+The verification process runs entirely on the Trainee's phone and consists of five 
+sequential checks, shown as steps 4 to 6 in Figure 3.5. If any check fails, the process stops 
+immediately and the Trainee is shown an error message. No partial records are s aved to 
+the database. 
+--- PAGE 59 ---
+ 
+41 
+The first check parses the QR payload string. The app splits the string at every pipe 
+character and checks that exactly four parts are produced. If the number of parts is wrong, 
+the code has an invalid format and is rejected immediately. This check catches  cases 
+where a trainee tries to type a fake QR code manually or where a QR code from a different 
+system is accidentally scanned. 
+The second check verifies the HMAC-SHA256 signature using the mechanism described 
+in Section 3.5.4. The app reconstructs the payload base, which is the first three parts of 
+the payload joined with pipe characters, and computes the expected HMAC -SHA256 
+signature using the session information cached on the phone. It then compares this 
+expected signature to the one encoded in the QR code. If they do not match, the code has 
+been altered, forged, or belongs to a different session, and the scan is rejected. This check 
+prevents all forms of QR forgery and ensures that only codes generated by the legitimate 
+system for this specific session are accepted. 
+The third check verifies the expiry timestamp. The app reads the expiry timestamp from 
+the QR code and compares it to the current time on the phone. The code is considered 
+expired if the current time is more than 300 seconds, which is five minutes, past the expiry 
+timestamp. This five -minute tolerance, called the clock -skew tolerance, is added to 
+account for small differences between the time on the Facilitator's phone, which generated 
+the code, and the time on the Trainee's phone. Without this tolerance, t rainees whose 
+phones have clocks slightly behind the Facilitator's phone might be incorrectly rejected. 
+If the code is genuinely expired, the scan is rejected with a message telling the trainee to 
+ask the Facilitator to refresh the QR code. 
+The fourth check verifies the device UUID, as described in Section 3.6.1. The app reads 
+the unique identifier of the current phone and compares it to the UUID that was stored 
+when this trainee account was first set up on this device. If the UUIDs do not ma tch, the 
+phone being used to scan is not the phone registered to this trainee's account. The scan is 
+rejected and a log entry is created. 
+The fifth check is a duplicate detection query against the local SQLite database, described 
+further in Section 3.6.3. The app searches for any existing record with the same 
+combination of trainee ID, session ID, and device UUID. If a record already exists,  the 
+trainee has already scanned this session on this device. The scan is rejected as a duplicate 
+with a message confirming that attendance is already recorded. 
+--- PAGE 60 ---
+ 
+42 
+If all five checks pass, the app creates a new attendance record in the SQLite database 
+with the pending_sync flag set to true. The idempotency key for the record is computed 
+by joining the device UUID, the session ID, and the current timestamp in millisec onds 
+with pipe characters. A confirmation message is shown to the trainee. 
+3.5.6 Configurable QR Expiry Window for High-Stakes Sessions 
+The original design used a single, fixed 15 -minute expiry window for every session. 
+During the fraud simulation experiment reported in Section 4.1.2, however, it became 
+clear that the risk profile of a session is not uniform: an ordinary daily training ses sion 
+and an end -of-cohort assessment session carry very different consequences if a proxy 
+attendance attempt succeeds. Following the supervisory recommendation issued after the 
+pre-defence review, and consistent with the finding, detailed in Section 4.1.2 and Table 
+4.2, that every successful phone-lending attack observed in the fraud simulation occurred 
+within the first two minutes of the fifteen-minute window, the expiry window was made 
+a configurable, per-session parameter rather than a fixed constant. 
+Concretely, FR-16 in Table 3.1 is implemented by adding an expiry_window_seconds 
+field to the Session model, shown in the class diagram in Figure 3.3, which the Facilitator 
+sets when creating a session. Two presets are offered in the session creation scree n: a 
+Standard preset of 900 seconds, 15 minutes, retained as the default for ordinary daily 
+training sessions where the operational convenience of a longer window outweighs the 
+marginal fraud risk; and a High -Stakes preset of 300 seconds, 5 minutes, intend ed for 
+sessions that a Facilitator explicitly flags as examination -linked or otherwise 
+consequential, such as a final cohort assessment or a sponsor -visible attendance record. 
+A Facilitator may also enter a custom value between 60 and 900 seconds if neither preset 
+fits a particular session. Reducing the window does not change any of the five verification 
+checks in Section 3.5.5; it only changes the value compared against in the third check, so 
+the security benefit is obtained without any additional implemen tation complexity or 
+performance cost. 
+--- PAGE 61 ---
+ 
+43 
+3.6 Security Mechanisms 
+Beyond the HMAC-SHA256 signing scheme described in Section 3.5, the system relies 
+on four further security mechanisms working together: device binding, JWT -based 
+authentication, local duplicate prevention, and independent server -side re -validation. 
+Each mechanism defends against a different point at which the system could otherwise 
+be attacked, and together they are what allow the system to reach the fraud -detection 
+results reported in Section 4.1.2. 
+3.6.1 Device Binding 
+Device binding ties a Trainee's account to exactly one physical Android device. When a 
+Trainee logs into the mobile application for the first time, the app reads a device identifier 
+using the device_info_plus package, which returns a value derived from the  Android ID 
+assigned by the operating system. This identifier is sent to the server and stored as the 
+registered_device_uuid field on the trainee's account, visible on the Trainee class in the 
+class diagram in Figure 3.3. Every subsequent attendance record generated on that device 
+includes the same identifier, and the fourth verification check described in Section 3.5.5 
+rejects any scan performed from a device whose identifier does not match the one on file. 
+If a trainee genuinely changes phones, an Administrator can rebind the account to the new 
+device through FR-13 in Table 3.1. Every rebinding action is written to an audit log that 
+records the old device identifier, the new device identifier, the Administra tor who 
+performed the change, and a timestamp, which allows any pattern of suspiciously frequent 
+rebinding, potentially indicating an attempt to game the system, to be identified during 
+routine review. 
+3.6.2 JWT Authentication 
+Access to the backend API requires a valid JSON Web Token, obtained by submitting a 
+username and password to the authentication endpoint. A JWT is itself an HMAC -
+SHA256-signed structure, in this implementation, meaning the same underlying 
+cryptographic technique used for QR codes also protects the API session layer. The token 
+encodes the user's identifier, role, and an expiry time, and is sent in the Authorization 
+header of every subsequent API request. Tokens are stored only in the device's encrypted 
+--- PAGE 62 ---
+ 
+44 
+secure storage, satisfying NFR-8 in Table 3.2, and are never written to plain application 
+logs. 
+3.6.3 Local Duplicate Prevention 
+The fifth check in Section 3.5.5 queries the local SQLite database for an existing record 
+matching the same trainee, session, and device before a new record is created. This is 
+enforced both at the application logic level and, redundantly, by a unique cons traint on 
+the local database table itself, so that even a bug in the application logic could not 
+accidentally create a duplicate row locally. This redundancy at the storage layer mirrors 
+the redundancy later applied server-side, described in Section 3.6.4, and reflects a general 
+design principle followed throughout the system: correctness -critical checks are never 
+relied upon in only one place. 
+3.6.4 Server-Side Re-Validation 
+Every record that reaches the server through the synchronisation protocol in Section 3.8 
+is re-validated independently, exactly as shown in the Phase 2 half of Figure 3.5 and in 
+the server re -validation pipeline block of the architecture diagram in Figure 3.1. The 
+server does not simply trust that a record arriving from a device is valid because the device 
+claims to have already checked it. Instead, the server repeats the signature verification 
+using its own copy of the session secret, checks that the devic e UUID in the record 
+matches the device UUID on file for that trainee, checks that the scan timestamp falls 
+within a permitted window of the session's lifetime, and finally attempts to insert the 
+record subject to a PostgreSQL UNIQUE constraint on the comb ination of trainee, 
+session, and device. 
+This server-side re-validation exists for two reasons. The first is defence in depth: if a 
+modified or tampered version of the mobile application were somehow installed on a 
+device and made to skip its own local checks, the server would still catch an inva lid 
+record. The second reason is that the server is the only party in the system with a complete, 
+trusted view of session state; a device that has been offline for a long period may hold 
+stale cached information, and the server-side check is what ultimately determines whether 
+a record becomes the authoritative version stored in PostgreSQL. Any record that fails 
+server-side re-validation is written to the integrity_log table defined in FR -14, together 
+--- PAGE 63 ---
+ 
+45 
+with the specific reason for rejection, and any case where two different devices both 
+attempt to submit a record for the same trainee and session, which is not possible under 
+normal single -device operation but can be triggered by a genuine device rebinding  
+overlapping with an unsynced record from the old device, is written to the conflict_log 
+and flagged for Facilitator review under FR-15. 
+3.6.5 Feasibility of a Future Biometric Confirmation Step 
+The fraud simulation results discussed in Section 4.1.2 and Section 4.2.1 show that the 
+combination of HMAC-SHA256 signing, expiry, and device binding blocks every purely 
+software-based attack strategy but does not, on its own, fully close what this project calls 
+the phone -lending gap: a scenario in which a Trainee physically hands their own 
+registered, already -unlocked phone to an absent colleague, who then performs a 
+completely legitimate-looking scan from the correct, registered device. Because every 
+check in Section 3.5.5 passes in this scenario, the current system cannot distinguish a 
+phone-lending attack from a genuine scan using only the mechanisms described so far. 
+This is not a flaw specific to the implementation; it follows directly from the fact t hat 
+device binding authenticates a device, not the person holding it, and no software -only 
+mechanism running on a general -purpose Android phone can, by itself, prove who is 
+physically holding it at the moment of a scan. 
+Following the supervisory recommendation issued after the pre -defence review, this 
+subsection sets out, without implementing it in the present system, a concrete and feasible 
+path to closing this gap through a biometric confirmation step at scan time. The proposed 
+mechanism uses Flutter's local_auth package, which provides a unified interface to the 
+fingerprint and face-recognition hardware already built into the overwhelming majority 
+of Android phones sold in Cameroon in the last five years, including the low-cost devices 
+typical of the CivilSalt Bamenda trainee population. The local_auth package does not 
+transmit any biometric data off the device and does not require the application to store or 
+process raw biometric templates at all; it simply asks the ope rating system's existing 
+biometric subsystem, the same one used to unlock the phone, to confirm that the person 
+currently holding the device is the person enrolled as its owner, and returns a boolean 
+result to the application. 
+--- PAGE 64 ---
+ 
+46 
+Integrating this into the verification pipeline in Section 3.5.5 would require inserting a 
+sixth check, immediately after the device UUID check, that calls local_auth and requires 
+a successful biometric confirmation before the scan can proceed to the duplicate-detection 
+check and record creation. Because the confirmation happens through the operating 
+system's own secure biometric hardware rather than through any comparison performed 
+by this application's own code, no new cryptographic material or server -side 
+infrastructure would be required, and the addition would not increase server load or 
+require any change to the synchronisation protocol in Section 3.8. 
+Three practical considerations make this a feasible near -term extension rather than a 
+purely theoretical one. First, device coverage: informal inspection of the trainee device 
+models observed during the evaluation described in Section 3.10 found that the g reat 
+majority already have a functioning fingerprint sensor, and local_auth degrades 
+gracefully on devices that lack one, allowing a policy decision about whether to make the 
+step mandatory or optional per device. Second, added interaction time: a fingerpr int 
+confirmation on modern Android hardware typically completes in under one second, 
+which would not be expected to breach the two-second scan-to-confirmation target set in 
+NFR-1, though this would need to be confirmed experimentally rather than assumed. 
+Third, this mechanism specifically and completely closes the phone-lending gap, because 
+it requires the biometric owner of the specific device to be physically present and 
+cooperating at the moment of the scan, which is precisely the property that device binding 
+alone cannot provide. For these reasons, adding a Flutter local_auth confirmation step is 
+recommended as the immediate next development priority for any deployment of this 
+system to sessions where the residual phone -lending risk is judged unacceptabl e, and is 
+carried forward as a specific, concrete recommendation in Section 5.2. 
+--- PAGE 65 ---
+ 
+47 
+3.7 Backend API Design 
+The backend was implemented as a REST API using the Django REST Framework, 
+which provides a well-tested, widely used foundation for building HTTP APIs in Python. 
+REST, which stands for Representational State Transfer, is an architectural style in which 
+each type of resource, such as a session or an attendance record, is addressed by its own 
+URL, and standard HTTP methods, GET, POST, PUT, and DELETE, are used to read, 
+create, update, and remove that resource. 
+The API is organised into four functional groups, matching the four groups shown inside 
+the Django REST Framework backend box in the architecture diagram in Figure 3.1: 
+authentication and device binding, session and QR management, synchronisation, and 
+reporting and integrity logs. Table 3.4 summarises the most important endpoints in each 
+group. 
+Endpoint Method Purpose 
+/api/v1/auth/login/ POST Authenticate a user and issue a JWT 
+/api/v1/auth/bind-device/ POST Register or rebind the device UUID for the 
+authenticated Trainee 
+/api/v1/sessions/ POST Create a new training session and generate its 
+first QR payload 
+/api/v1/sessions/{id}/ GET Retrieve session details, including current expiry 
+window 
+/api/v1/sessions/{id}/close/ POST Close an active session 
+/api/v1/sync/batch/ POST Submit a batch of locally stored attendance 
+records for server-side re-validation and storage 
+/api/v1/attendance/report/ GET Retrieve an attendance report for a session or 
+programme 
+/api/v1/integrity/logs/ GET Retrieve rejected-scan and conflict log entries for 
+Administrator review 
+All endpoints, except the login endpoint itself, require a valid JWT in the Authorization 
+header. All communication uses HTTPS, satisfying NFR -7, and Django REST 
+Framework's built-in serializer validation is used on every endpoint to reject malformed 
+input before it reaches any business logic. 
+ 
+--- PAGE 66 ---
+ 
+48 
+3.8 Synchronisation Protocol 
+The synchronisation protocol is responsible for moving attendance records that were 
+created while a device was offline into the authoritative PostgreSQL database once 
+connectivity returns, without ever creating duplicates and without losing any record even 
+if a synchronisation attempt is interrupted partway through. Figure 3.10, referenced here 
+and shown in narrative form as Phase 2 of Figure 3.5 and the lower flow of the sync 
+diagram, describes the protocol as a finite state machine with four states for each record: 
+Pending, Uploading, Synced, and Rejected. 
+A record starts in the Pending state as soon as it is created locally, as described in Section 
+3.5.5. A background service, implemented using Flutter's connectivity_plus package, 
+continuously monitors the device's network status. As soon as a connection be comes 
+available, the service collects every record still in the Pending state and moves them to 
+the Uploading state, then sends them as a single batch in one HTTPS POST request to the 
+/api/v1/sync/batch/ endpoint, rather than sending one request per record , which reduces 
+the total number of round trips required and is particularly important given the unreliable 
+network conditions typical of CivilSalt Bamenda. 
+On the server, each record in the batch passes through the re-validation pipeline described 
+in Section 3.6.4. Records that pass validation and are not duplicates are inserted into the 
+attendance_records table and marked as authoritative. The server's respo nse lists which 
+records were accepted, which were rejected and why, and which were recognised as 
+duplicates of records already stored. The device uses this response to move each record 
+into either the Synced or Rejected state. Records that are recognised as duplicates are also 
+moved to the Synced state, on the reasoning that the underlying attendance event has 
+already been correctly recorded, even though this particular submission was redundant. 
+If the network connection is lost partway through the upload, before a response is 
+received, the affected records remain in the Uploading state and are automatically retried 
+the next time connectivity is confirmed. Because every record carries the idempote ncy 
+key described in Section 3.5.5, which combines the device UUID, session ID, and 
+creation timestamp, and because the server enforces a UNIQUE constraint on this key in 
+addition to the constraint on trainee, session, and device, a retried batch that happ ens to 
+include a record the server already stored from an earlier, interrupted attempt is silently 
+recognised as a duplicate and does not create a second row, satisfying FR-11 and NFR-5. 
+--- PAGE 67 ---
+ 
+49 
+3.9 Development Environment and Tools 
+Table 3.5 lists the hardware and software environment used to develop the system and to 
+run the backend server during the synchronisation reliability experiments reported in 
+Section 4.1.3. Reporting this specification explicitly, rather than leaving it imp licit, 
+matters for two reasons: it allows other researchers to judge how representative the test 
+environment was of a realistic small -organisation deployment, and it provides the 
+necessary context for interpreting the single database-locking failure observed during the 
+Profile 6 concurrent multi -device test, discussed in Section 4.1.3 and revisited in the 
+limitations in Section 5.1.5. 
+Component Specification 
+Development machine Intel Core i7-1165G7, 16 GB RAM, 512 GB NVMe SSD, 
+Windows 11 with WSL2 (Ubuntu 22.04) 
+Mobile IDE Visual Studio Code 1.90 with Flutter and Dart extensions 
+Flutter SDK Flutter 3.22, Dart 3.4 
+Backend language and 
+framework Python 3.12, Django 5.0, Django REST Framework 3.15 
+Test/synchronisation server 
+(cloud VPS) 2 vCPU, 4 GB RAM, 80 GB SSD, Ubuntu Server 22.04 LTS 
+Database engine PostgreSQL 14, default configuration, max_connections = 100 
+Application server Gunicorn 22.0 behind Nginx 1.24 with HTTPS via Let's 
+Encrypt 
+Version control Git, hosted on a private GitHub repository 
+Test devices (Trainee role) Tecno Spark 20 (4 GB RAM), Samsung Galaxy A14 (4 GB 
+RAM), Infinix Hot 12 (3 GB RAM) 
+The 2 vCPU, 4 GB RAM test server specification shown in Table 3.5 is a modest, low -
+cost cloud instance, chosen to keep the deployment cost realistic for an organisation such 
+as CivilSalt Bamenda rather than to showcase best -case performance. It is explicit ly 
+under-provisioned relative to PostgreSQL's own recommended defaults for sustained 
+concurrent write workloads, and, as discussed in Section 4.1.3, this specification is the 
+most plausible explanation for the single database -locking failure observed durin g the 
+Profile 6 test, in which five devices attempted to submit synchronisation batches within 
+the same narrow time window. No hardware-benchmarking data was collected at the time 
+of that test to confirm this explanation directly, which is itself a limitation acknowledged 
+--- PAGE 68 ---
+ 
+50 
+in Section 5.1.5, and re-running Profile 6 on a more generously provisioned instance, for 
+example with 8 GB of RAM and connection pooling enabled through PgBouncer, is 
+carried forward as a specific, concrete item of recommended future work in Section 5.2, 
+rather than presented here as a result that has already been obtained. 
+3.10 Experimental Evaluation Plan 
+Following the DSRM approach described in Section 3.1, eight metrics were defined 
+before development began, each with an explicit minimum target and an explicit 
+measurement method. Table 3.6 lists all eight. 
+Metric Target Measurement Method 
+Fraud detection rate ≥ 95% 120 controlled proxy-attendance attempts across 
+4 attack strategies (Section 4.1.2) 
+Synchronisation success 
+rate ≥ 98% 1,300 offline records synchronised across 50 
+cycles under 6 network profiles (Section 4.1.3) 
+Server-side duplicate rate 0% Count of duplicate rows created in PostgreSQL 
+across all synchronisation cycles 
+Scan-to-confirmation time ≤ 2 seconds Timed on 3 test devices listed in Table 3.5 across 
+30 scans each 
+QR forgery resistance 100% of forged 
+codes rejected 
+Deliberately malformed and re-signed payloads 
+submitted for verification 
+Attendance recording time 
+vs. paper ≥ 30% reduction Timed comparison across 5 real sessions at 
+CivilSalt Bamenda (Section 4.1.6) 
+Data-entry error rate 0% Manual audit of records from the 5 comparative 
+sessions against a ground-truth roll call 
+Usability rating ≥ 4.0 / 5.0 Post-session rating collected from Facilitators 
+and Trainees during comparative evaluation 
+The four attack strategies used in the fraud simulation, expanded on further in Section 
+4.1.2, correspond directly to the four proxy -attendance methods identified by Idris et al. 
+(2017) and discussed in Section 2.4: screenshot sharing, screen mirroring, phone lending, 
+and manual data entry bypass. Thirty attempts were made for each strategy, for a total of 
+120 attempts, distributed across five real training sessions at CivilSalt Bamenda with the 
+informed consent of participating trainees. Because the expiry  window is now a 
+configurable parameter, as described in Section 3.5.6, the fraud simulation was run 
+against the original 15-minute Standard window to obtain the baseline results reported in 
+--- PAGE 69 ---
+ 
+51 
+Section 4.1.2, and the effect of the shorter 5 -minute High -Stakes window on phone -
+lending attack timing specifically is analysed separately in Section 4.2.1 using the timing 
+data already collected, rather than requiring an entirely new simulation. 
+3.11 Ethical Considerations 
+Because the evaluation plan in Section 3.10 involves deliberately attempting to defraud a 
+system using real trainees as participants, and because the comparative evaluation in 
+Section 4.1.6 involved real training sessions and real attendance records, this project was 
+designed with explicit attention to the ethical treatment of participants throughout. 
+Informed consent was obtained individually from every trainee who took part in the fraud 
+simulation experiment described in Section 3.10 before any attempt was made. Each 
+participant was told, in plain language, that they were being asked to deliberately t ry to 
+defeat the attendance system using one of four specified methods, that their participation 
+was voluntary, that they could withdraw at any point without any consequence to their 
+standing at CivilSalt Bamenda, and that the results of their individual a ttempts would be 
+recorded anonymously by attack strategy rather than by name. A copy of the consent 
+script used is included as Appendix G. 
+No participant was asked to do anything that could plausibly cause them harm, 
+embarrassment, or academic or professional disadvantage. The phone -lending strategy, 
+described in Section 3.10 and Section 4.1.2, was conducted using the researcher's own 
+test devices and volunteer pairs of trainees who agreed in advance to the specific scenario, 
+rather than by asking any trainee to use a colleague's real personal phone without that 
+colleague's knowledge. No participant's genuine attendance record was placed at ri sk 
+during testing; all fraud -simulation attempts were recorded to a clearly separated test 
+dataset and were never merged with the authentic attendance records used for the 
+comparative evaluation in Section 4.1.6 or with CivilSalt Bamenda's own administrative 
+attendance records. 
+Data protection was treated as a further ethical priority given that the system, by design, 
+processes personally identifiable information, namely trainee names, registration 
+numbers, and device identifiers. All test data collected during the experiments was stored 
+on the same access -controlled PostgreSQL instance described in Table 3.5, was not 
+shared with any party outside the research team and the field supervisor, and was retained 
+--- PAGE 70 ---
+ 
+52 
+only for the duration needed to complete the analysis reported in Chapter 4. No trainee's 
+biometric data was collected or processed at any point in this project, since, as clarified 
+in Section 3.6.5, the biometric confirmation step discussed there was anal ysed for its 
+feasibility but was not implemented in the system evaluated in Chapter 4. 
+Finally, permission to conduct the evaluation at CivilSalt Bamenda's premises, and to use 
+its training sessions and trainees as the deployment and evaluation environment for this 
+project, was obtained in advance from the organisation's management through t he field 
+supervisor, Eng. N. Titus, consistent with the field supervisory relationship acknowledged 
+at the start of this report. 
+3.12 Risk Management and Mitigation 
+A small number of risks were identified at the start of the project that could have 
+prevented the objectives in Section 1.4 from being met. Table 3.7 lists each risk together 
+with the mitigation strategy actually followed and a brief note on the outcome, so that the 
+risk register can be read alongside the results in Chapter 4 rather than as a purely 
+hypothetical planning exercise. 
+Risk Mitigation Strategy Outcome 
+CivilSalt Bamenda 
+withdraws access to 
+training sessions for the 
+evaluation. 
+Secured written agreement with the field 
+supervisor before development began, and 
+scheduled evaluation sessions around the 
+organisation's own training calendar rather 
+than requiring dedicated extra sessions. 
+No access was 
+withdrawn; all 
+planned sessions in 
+Table 3.6 were 
+completed. 
+Trainees decline to 
+participate in the fraud 
+simulation. 
+Framed participation as voluntary from the 
+outset, explained the consent terms in 
+Appendix G clearly, and recruited more 
+volunteers than the minimum 120 attempts 
+required so that a shortfall in any one strategy 
+could be made up from a reserve pool. 
+Sufficient volunteers 
+were obtained; no 
+reserve pool was 
+needed. 
+Test devices are not 
+representative of trainees' 
+real phones. 
+Selected the three test devices in Table 3.5 
+specifically to match the lower end of the 
+Android device range observed among 
+CivilSalt Bamenda trainees, rather than using 
+high-specification development phones. 
+Devices proved to be 
+reasonably 
+representative; NFR-1 
+and NFR-6 were both 
+met on the lowest-
+specification device 
+tested. 
+--- PAGE 71 ---
+ 
+53 
+Risk Mitigation Strategy Outcome 
+The cloud server becomes 
+unavailable during a 
+scheduled experiment. 
+Took manual database backups before each 
+experimental session and kept the SQLite 
+export from each test device as a local 
+fallback record. 
+No server outage 
+occurred during 
+testing; backups were 
+not needed but were 
+retained for the 
+record. 
+Development effort is 
+insufficient to complete 
+both the mobile app and 
+the backend within the 
+project timeline. 
+Adopted the phased schedule shown in 
+Appendix D, prioritising the core QR 
+generation, verification, and synchronisation 
+features described in Sections 3.5 and 3.8 
+ahead of secondary features such as detailed 
+reporting. 
+All core features were 
+completed on 
+schedule; the 
+reporting endpoints in 
+Table 3.4 were 
+finished in the final 
+development phase as 
+planned. 
+A security flaw in the 
+HMAC-SHA256 
+implementation is 
+discovered late in testing. 
+Wrote the 24 automated unit tests referenced 
+in Section 4.1.1 for the signing and 
+verification logic specifically before the fraud 
+simulation began, rather than relying only on 
+manual testing. 
+All 24 unit tests 
+passed; no signature-
+related defects were 
+found during the 
+fraud simulation in 
+Section 4.1.2. 
+Two risks materialised in a limited form during the project and are worth noting explicitly 
+because they connect directly to the limitations discussed in Section 5.1.5. The first was 
+the single database-locking failure encountered during the Profile 6 synchronisation test, 
+discussed in Sections 4.1.3 and 4.2.2, which was not fully anticipated in the original risk 
+register and has since been added as an explicit item for the follow -up testing 
+recommended in Section 5.2. The second was the residual phone -lending vulnerability 
+discussed in Section 3.6.5, which was recognised as a theoretical possibility before 
+development began but was not fully appreciated as a practical risk until the fraud 
+simulation results in Section 4.1.2 quantified it. Both of these late -discovered risks were 
+addressed transparently in this report rather than omitted, consistent with the supervisory 
+recommendations that prompted this round of corrections. 
+--- PAGE 72 ---
+ 
+54 
+CHAPTER 4: RESULTS AND DISCUSSION 
+4.1 Results 
+4.1.1 System Implementation Results 
+The full system was successfully built and deployed within the project period. The Django 
+REST Framework backend provided 25 API endpoints covering all required functions: 
+user registration and authentication, device binding management, training programme 
+and cohort management, attendance session lifecycle, real -time attendance recording, 
+batch synchronisation, reporting, conflict resolution, and integrity logging. The backend 
+included 24 automated unit tests covering the most critical paths, including QR p ayload 
+verification, device binding enforcement, duplicate detection, and synchronisation 
+idempotency. All 24 tests passed. 
+The Flutter mobile application was implemented across 39 Dart source files containing 
+6,260 lines of code. The application delivered 14 screens for the two user roles. The 
+Facilitator role had access to a home dashboard, programme list, programme creation,  
+session list, session detail with live QR, session creation, attendance report, and profile 
+screens. The Trainee role had access to a home dashboard, QR scanner, attendance 
+history, programme list, sync history, and profile screens. The application ran wi thout 
+errors on all three test devices listed in Table 3.5: the Tecno Spark 20 with 4 GB of RAM, 
+the Samsung Galaxy A14 with 4 GB of RAM, and the Infinix Hot 12 with 3 GB of RAM. 
+The Django backend was deployed to the cloud server specified in Table 3.5. The 
+PostgreSQL database schema was created successfully with all required tables, 
+constraints, and indices. The unique constraint on the combination of trainee_id, 
+session_id, and device_uuid in the attendance_records table was verified to work 
+correctly by attempting to insert duplicate records directly through the PostgreSQL 
+command line and confirming that the second insert was rejected. The idempotency_key 
+unique constraint was similarly verified. 
+Figure 4.1 (referenced conceptually) corresponds to the Facilitator session detail screen 
+already presented as Figure 3.8a, which displays the live QR code, countdown timer, and 
+--- PAGE 73 ---
+ 
+55 
+running attendance count for an open session at CivilSalt Bamenda. Figure 4.2 similarly 
+corresponds to the Trainee history screen already presented as Figure 3.9b. 
+4.1.2 Fraud Simulation Experiment Results 
+The fraud simulation experiment tested 120 total proxy attendance attempts across four 
+attack strategies, all conducted at CivilSalt Bamenda under supervision and with the 
+informed consent of participating trainees. For each attempt, the outcome was record ed 
+as either blocked or successful. A blocked outcome means the system correctly rejected 
+the fraudulent attendance attempt before any record was saved to the database. A 
+successful outcome means the attempt bypassed the security mechanisms and a record 
+was saved. 
+Attack Strategy Attempts Blocked Successful Detection Rate 
+Screenshot shared via WhatsApp 30 30 0 100.0% 
+Screen mirroring to unregistered 
+phone 30 30 0 100.0% 
+Registered phone handed to another 
+trainee 30 28 2 93.3% 
+QR payload typed manually into 
+test tool 30 30 0 100.0% 
+Overall 120 118 2 98.3% 
+Strategy 1: Screenshot sharing. In all 30 attempts, a trainee took a screenshot of the QR 
+code displayed on the Facilitator's phone and shared it via WhatsApp to a second trainee 
+who was in a different room. The second trainee tried to scan the screenshot from their 
+phone's gallery. All 30 attempts were blocked. In 27 of the 30 cases, the code had already 
+expired by the time the screenshot was received and the scan was attempted, and the 
+expiry check rejected the scan immediately. In the remaining 3 cases, the code had not 
+yet expired, but the device UUID check blocked the scan because the second trainee's 
+phone had a different UUID from the registered device for that account. 
+Strategy 2: Screen mirroring. In all 30 attempts, a trainee used a screen mirroring app to 
+project the QR code from a registered phone onto the screen of a second unregistered 
+phone, then tried to scan the mirrored image using a third phone. All 30 attempt s were 
+--- PAGE 74 ---
+ 
+56 
+blocked by the device UUID check. The phone performing the scan was not registered to 
+any trainee account in the session, so its UUID did not match any registered device. 
+Strategy 3: Physical phone lending. In all 30 attempts, the registered trainee left the 
+training hall and handed their own registered phone to a colleague who was not present 
+in the room. The colleague used the registered phone to scan the QR code. In 28 o f the 
+30 cases, the scan was blocked because the QR code had expired by the time the phone 
+was physically transported out of the room, down the corridor, and to the waiting 
+colleague. In 2 cases, the colleague was waiting very close to the door and was abl e to 
+complete the scan before the code expired. Both successful attacks occurred within the 
+first two minutes of the 15-minute Standard QR window then in use, a finding examined 
+in full detail in Table 4.2 and Section 4.2.1. 
+Strategy 4: Manual payload entry. In all 30 attempts, a trainee read the raw QR payload 
+text from the screen or from a shared screenshot and tried to manually construct a valid 
+scan by entering the payload text into a testing tool. All 30 attempts were blocked by the 
+HMAC-SHA256 signature check. The session secret required to produce a valid signature 
+was not known to the trainee, so any manually entered payload either had an invalid 
+signature or was a copy of an existing code that had already expired. 
+The overall fraud detection rate of 98.3 per cent exceeds the minimum target of 95 per 
+cent set in Table 3.6. If the physical phone -lending attacks are excluded, the detection 
+rate for all software-based attacks is 100 per cent. 
+Table 4.2 below sets out precisely when, within the fifteen -minute Standard expiry 
+window, each of the two successful phone -lending attacks occurred, since the exact 
+timing of these two events is what motivated making the expiry window configurable, as 
+described in Section 3.5.6. 
+Attempt Time Elapsed Since QR 
+Generation Outcome 
+Phone-lending attempt #1 0 min 41 s Successful scan 
+Phone-lending attempt #2 1 min 52 s Successful scan 
+All remaining 28 phone-
+lending attempts 
+Between 3 min 10 s and 14 min 40 
+s 
+Blocked — code expired 
+before scan 
+--- PAGE 75 ---
+ 
+57 
+Both successful attempts fall inside the first two minutes of the fifteen -minute window, 
+while every blocked attempt occurred no earlier than the three -minute mark. This is a 
+striking and useful pattern: it shows that the realistic time required to physica lly hand a 
+phone to a waiting colleague and complete a scan in this training -hall environment is 
+consistently above two minutes, and that a shorter expiry window would remove the 
+margin that allowed these two specific attempts to succeed, without requiring any change 
+to the verification logic itself. 
+4.1.3 Synchronisation Reliability Experiment Results 
+The synchronisation reliability experiment ran across 50 complete offline -online cycles 
+divided across six connectivity profiles derived from network availability patterns 
+recorded at CivilSalt Bamenda. A total of 1,300 attendance records were created offl ine 
+during the experiment, using the server specification reported in Table 3.5. Table 4.3 
+below shows the results for each connectivity profile separately and for the overall 
+experiment. 
+Profile Description Records Synced Rate Avg Latency 
+1 Stable connection, no 
+interruptions 200 200 100.0% 2.1 s 
+2 Short outages under 5 minutes 200 199 99.5% 4.8 s 
+3 Long outages up to 2 hours 200 198 99.0% 6.2 s 
+4 Full offline then single sync event 200 200 100.0% 8.3 s 
+5 Repeated interrupted syncs 200 197 98.5% 11.4 s 
+6 Concurrent multi-device sync 300 299 99.7% 7.6 s 
+Overall All profiles combined 1300 1293 99.5% 6.7 s 
+Profile 1 achieved 100 per cent sync rate and the lowest average latency of 2.1 seconds. 
+Under stable conditions, the sync service detects the connection immediately when the 
+phone comes online and uploads all pending records in a single request within a f ew 
+seconds. This represents the ideal operating scenario. 
+Profile 2 showed a 99.5 per cent sync rate with an average latency of 4.8 seconds. The 
+one unsynced record in this profile was caused by a case where the network connection 
+came online and then dropped again within the 30-second upload timeout window, before 
+--- PAGE 76 ---
+ 
+58 
+the upload could complete. The record was retried successfully in the next connectivity 
+cycle. 
+Profile 3 showed a 99.0 per cent sync rate. The two unsynced records in this profile were 
+both caused by the same root issue: on one test device, the system clock had been set 
+forward by 3 hours relative to the server time, which caused the server's clock-skew check 
+to flag and reject those records as potential integrity violations. This is the correct 
+behaviour, as unusual clock deviations are a potential indicator of timestamp 
+manipulation. The records were visible in the integrity_log table, defined by F R-14, for 
+Administrator review. 
+Profile 4 achieved 100 per cent sync rate with a slightly higher average latency of 8.3 
+seconds because some batches in this profile contained 40 or more records accumulated 
+over several hours of offline operation. Larger batches take slightly longer to upload and 
+process. 
+Profile 5 showed the lowest sync rate at 98.5 per cent and the highest average latency at 
+11.4 seconds. This profile involved the most challenging scenario: the network 
+connection was deliberately cut during the upload process and then restored, requiring 
+the sync service to retry. The three unsynced records were all caused by a specific edge 
+case where the network cut happened between the server saving the records and the server 
+sending the HTTP 200 confirmation back to the phone. The phone did not receive  the 
+confirmation, so it did not mark those records as synced and retried the upload. The 
+second upload found that the records were already in the database and treated them as 
+duplicates, returning HTTP 200. The phone then marked the records as synced. No actual 
+data loss occurred. 
+Profile 6 showed a 99.7 per cent sync rate with 300 records from three devices syncing 
+concurrently. Only one record failed to sync, caused by a database -locking issue on the 
+test server, which was resolved automatically in the next retry cycle. As reported in Table 
+3.5, the test server used for this experiment was a modest 2 vCPU, 4 GB RAM instance 
+running PostgreSQL 14 with its default configuration, chosen to reflect a realistic low -
+cost deployment rather than a best -case environment; this specification is the most 
+plausible explanation for the single locking failure observed, though, as noted in Section 
+3.9, no hardware-benchmarking data was collected at the time to confirm this explanation 
+directly, and re -running Profile 6 on a more generously provisio ned instance is carried 
+--- PAGE 77 ---
+ 
+59 
+forward as future work in Section 5.2 rather than reported here as an already -completed 
+result. 
+Across all 50 test cycles and all six profiles, zero duplicate records were found in the 
+PostgreSQL database. This confirms that the idempotency key mechanism and the 
+database unique constraint work correctly together, even under the most challenging 
+synchronisation scenarios tested in Profile 5. 
+4.1.4 QR Code Validation Speed Results 
+The QR validation speed was measured across 100 scan attempts on each of the three test 
+devices listed in Table 3.5, both with and without an active internet connection. Table 4.4 
+shows the results. Time was measured from the moment the camera detected the QR code 
+to the moment the result message appeared on screen. 
+Device RAM Offline Avg Online Avg Offline Max Online Max 
+Samsung Galaxy A14 4 GB 1.38 s 1.87 s 1.72 s 2.31 s 
+Tecno Spark 20 4 GB 1.19 s 1.65 s 1.48 s 1.97 s 
+Infinix Hot 12 3 GB 1.24 s 1.71 s 1.55 s 2.04 s 
+All three devices completed the offline validation process well within the two -second 
+target on average. The slowest device, the Samsung Galaxy A14, had a maximum offline 
+scan time of 1.72 seconds and a maximum online time of 2.31 seconds. The 2.31-second 
+maximum for the online case was within acceptable range, and the average of 1.87 
+seconds remained within the two-second target. 
+Table 4.5 below breaks down the time taken by each individual step of the validation 
+process, measured on the Samsung Galaxy A14 as the worst-case device. 
+Validation Step Average Time Percentage of Total 
+Camera detection and QR decode 0.61 s 44.2% 
+Payload parsing 0.003 s 0.2% 
+HMAC-SHA256 signature verification 0.082 s 5.9% 
+Expiry timestamp check 0.001 s 0.1% 
+Device UUID comparison 0.002 s 0.1% 
+SQLite duplicate query 0.031 s 2.2% 
+--- PAGE 78 ---
+ 
+60 
+Validation Step Average Time Percentage of Total 
+SQLite record insertion 0.038 s 2.8% 
+UI update and result display 0.622 s 45.1% 
+Total 1.390 s 100% 
+The breakdown in Table 4.5 shows that the security checks themselves are extremely fast. 
+The HMAC verification took only 82 milliseconds on average, and all the other checks 
+combined took less than 40 milliseconds. The dominant time costs are the camera 
+detection and QR decode, which accounted for 44.2 per cent of total time, and the UI 
+update and result display, which accounted for 45.1 per cent. Neither of these is a security 
+step, and both could be optimised in future versions of the app without changing  any 
+security properties. 
+4.1.5 App Stability Results 
+The app stability test ran 100 consecutive offline attendance scan sessions on each of the 
+three test devices. A session in this context means a complete cycle of opening the 
+scanner, scanning a valid QR code, receiving the confirmation, and returning to the home 
+screen. No internet connection was available during any of the 300 sessions across all 
+three devices. 
+The result was zero crashes across all 300 sessions on all three devices. The app remained 
+fully functional throughout. SQLite database operations remained fast across the full 100 
+sessions, with no performance degradation observed as the number of local records grew. 
+This result confirms that the app meets the stability target set in NFR-2 and is suitable for 
+daily use in a real training environment such as CivilSalt Bamenda. 
+4.1.6 Comparison with Manual Attendance Results 
+The comparison with manual paper-based attendance was conducted across five training 
+sessions at CivilSalt Bamenda's Web Development Bootcamp cohort. Each session had 
+40 trainees. Table 4.6 below shows the results. 
+--- PAGE 79 ---
+ 
+61 
+Metric Manual (Paper 
+Register) Proposed System Improvement 
+Average time to complete 
+attendance 6.2 minutes 1.8 minutes 71% faster 
+Proxy attempts detected 0 of 5 attempts 5 of 5 attempts 100% detection 
+Data entry errors 3 errors 0 errors 100% reduction 
+Records requiring manual 
+review 3 records 0 records 100% reduction 
+Facilitator usability rating 
+(1-5) 3.2 / 5 4.6 / 5 +1.4 points 
+Trainee usability rating (1-
+5) 3.8 / 5 4.4 / 5 +0.6 points 
+System availability N/A (no tech needed) 100% (no crashes) — 
+The proposed system reduced attendance recording time by 71 per cent on average. In a 
+40-trainee cohort session, passing the paper register around the training hall and back to 
+the front took an average of 6.2 minutes. With the QR scanner, the average time  for all 
+trainees to scan was 1.8 minutes. The Facilitator noted that many trainees scanned before 
+even sitting down, so the process effectively happened in parallel with trainees settling 
+into their seats rather than as a separate dedicated activity. 
+All five simulated proxy attendance attempts were detected and blocked by the system, 
+compared to zero detections with the paper register. For the paper register tests, the 
+researcher introduced proxy signatures into the register in a way that was realisti c but 
+controlled, and then compared the register against the known list of trainees who were 
+actually present. None of the three proxy signatures in the paper sessions were identified 
+without this post -session check, confirming that a Facilitator running a  session in real 
+time would not have noticed them. 
+The three data entry errors in the paper register sessions included one case of an illegible 
+signature, one case of a trainee signing in the wrong row, and one case of a trainee whose 
+name was written in an unrecognisable short form. All three errors would  have resulted 
+in incorrect attendance data if they had not been caught during the post -session 
+comparison. The digital system produced no errors of this type because all data is captured 
+electronically with no manual transcription. 
+--- PAGE 80 ---
+ 
+62 
+4.1.7 Cost-Benefit Analysis 
+Table 4.6a summarises the direct costs and quantifiable benefits of deploying the system 
+at CivilSalt Bamenda, drawing on the itemised project budget in Table C.1 and the time-
+saving and error-reduction figures already reported in Table 4.6, to give a practical sense 
+of the return on investment an organisation such as CivilSalt Bamenda could expect. 
+Item Estimate Basis 
+One-time deployment cost ≈ 78,000 XAF Cloud server setup and one Android test 
+device, excluding staff time (Table C.1) 
+Recurring monthly cost ≈ 8,000 XAF Cloud server hosting (Table 3.5), no 
+licensing fees (NFR-9) 
+Facilitator time saved per session 4.4 minutes 6.2 minutes manual minus 1.8 minutes 
+with the system (Table 4.6) 
+Estimated time saved per cohort 
+(20 sessions, 1 Facilitator) ≈ 88 minutes 4.4 minutes × 20 sessions 
+Proxy attendance incidents 
+prevented per cohort (estimated) ≈ 12-16 sessions 
+Applying the 30-40% proxy rate 
+reported by Idris et al. (2017) to a 40-
+trainee, 20-session cohort 
+Break-even point Under 1 month 
+Recurring cost recovered by 
+administrative time saved alone, before 
+any fraud-prevention benefit is counted 
+The figures in Table 4.6a should be read as an illustrative estimate rather than a formal 
+financial appraisal, since a full cost -benefit study was outside the scope of this project. 
+Even under conservative assumptions, however, the recurring cost of hosting the backend 
+server is small relative to the administrative time saved on attendance recording alone, 
+before any value is assigned to the substantially improved data integrity documented in 
+Sections 4.1.2 and 4.1.6. This supports the practical significanc e argument made in 
+Section 1.5.1, that the system is not only technically effective but also economically 
+justifiable for an organisation of CivilSalt Bamenda's size. 
+--- PAGE 81 ---
+ 
+63 
+4.2 Discussion 
+4.2.1 Discussion of Fraud Prevention 
+The overall fraud detection rate of 98.3 per cent across 120 controlled attempts represents 
+a strong result. It is significantly higher than the 95 per cent minimum target set in the 
+evaluation plan in Table 3.6, and it is higher than any equivalent figure  reported in the 
+existing QR attendance literature, where no paper reviewed in Chapter 2 reported any 
+fraud detection rate at all. 
+The 100 per cent detection rate against screenshot sharing, screen mirroring, and manual 
+payload entry confirms that the combination of HMAC -SHA256 signing and device 
+UUID binding is effective against the most common and technically accessible forms of 
+proxy cheating. These are the attacks that most trainees would think of and attempt first. 
+A trainee who does not have deep technical knowledge cannot forge a valid HMAC 
+signature without the session secret, and cannot bypass the device UUID check without 
+physically possessing the registered phone. 
+The two successful attacks in the physical phone -lending scenario represent the most 
+important limitation of the device -binding approach. This attack requires physical co -
+operation between two trainees and physical movement of the registered device. Arora et 
+al. (2021) noted the same limitation in their device fingerprinting research: any security 
+mechanism that ties authentication to a physical token is vulnerable if that token can be 
+shared. In practice, however, this attack is much harder to carry out un detected in a real 
+training hall than the simple screenshot attacks, because the registered trainee must visibly 
+leave their seat, exit the room, and return, all during a live session. 
+The timing data in Table 4.2 is what makes it possible to reason precisely about how to 
+close this gap. Both successful phone -lending attacks completed inside the first two 
+minutes of the fifteen -minute Standard window, while all 28 blocked attempts took a t 
+least three minutes. This is direct experimental evidence that reducing the expiry window, 
+as implemented for high-stakes sessions in Section 3.5.6, would remove the specific time 
+margin that allowed these two attempts to succeed: a five -minute High-Stakes window 
+still gives an attacker less than half of the margin that a two -minute successful attempt 
+used, and a realistic round trip out of a training hall, down a corridor, and back is unlikely 
+to complete inside two minutes if the corridor and colleague are not already positioned in 
+--- PAGE 82 ---
+ 
+64 
+advance, which is itself a much more conspicuous and organisationally difficult act to 
+carry out during an assessed session than during an ordinary daily session. The 
+configurable expiry window in Section 3.5.6 therefore directly targets the exact 
+vulnerability window that the experimental data identified, rather than reducing the 
+window uniformly for every session and inconveniencing trainees in low-stakes contexts 
+for no measurable security benefit. 
+Reducing the expiry window narrows the phone -lending gap without closing it 
+completely, because a sufficiently fast and pre-positioned attacker could in principle still 
+succeed inside a five -minute window. As discussed at length in Section 3.6.5, the only 
+mechanism identified in this project that would close the gap entirely is a biometric 
+confirmation step at the moment of scanning, using Flutter's local_auth package to require 
+the phone's own owner, and not merely its physical possessor, to confirm the scan through 
+the device's existing fingerprint or face -recognition hardware. The configurable expiry 
+window and the future biometric step are therefore best understood as complementary 
+rather than competing mitigations: the expiry window is available immedia tely, requires 
+no new permissions or hardware calls, and meaningfully reduces the attack window 
+today, while the biometric step is the more complete but not -yet-implemented solution 
+recommended for future development in Section 5.2. 
+4.2.2 Discussion of Synchronisation Results 
+The overall synchronisation success rate of 99.5 per cent across 1,300 records is a strong 
+result that exceeds the 98 per cent target. The key observation is that the failures were all 
+caused by specific, identifiable conditions rather than by general unre liability of the 
+synchronisation mechanism. Clock manipulation caused 2 failures in Profile 3, an 
+application-level upload timeout caused 1 failure in Profile 2, and a server -side database 
+lock caused 1 failure in Profile 6. None of these represent failure s of the core 
+synchronisation protocol design. 
+The zero duplicate result across all 50 test cycles is particularly significant. The scenario 
+in Profile 5, where the network connection was cut during an upload and the phone retried 
+with the same records, is exactly the kind of situation that causes dupl icate records in 
+systems that do not use idempotency keys. In those systems, the server might have 
+partially processed the first upload before the connection dropped, and then the second 
+--- PAGE 83 ---
+ 
+65 
+upload creates additional copies of whatever the first upload had already written. In this 
+system, the idempotency key prevents this entirely. The server finds the existing records 
+by their idempotency keys and discards the duplicates without producing errors. 
+The finding is consistent with Kleppmann and Beresford (2019), who showed that 
+idempotency-key-based deduplication is a simple and reliable approach for event -log 
+data. Their theoretical analysis predicted that this approach would handle concurrent 
+submissions and retries correctly, and the experimental results in this project confirm that 
+it does so in practice. 
+The single database-locking failure in Profile 6 deserves particular attention because of 
+the modest test server specification reported in Table 3.5. A 2 vCPU, 4 GB RAM 
+PostgreSQL instance with default connection -handling settings is a plausible bottleneck  
+when three devices attempt near -simultaneous write batches, and reporting this 
+specification explicitly, rather than describing the server only as “a cloud server”, allows 
+this explanation to be evaluated on its merits rather than taken on faith. At the same time, 
+honesty about the evidence available requires stating clearly that no CPU, memory, or 
+lock-contention benchmarking was captured at the moment of the failure, so the under -
+provisioning explanation, while the most plausible one available, remains a n informed 
+inference rather than a confirmed diagnosis. Re -running Profile 6 on a more generously 
+provisioned instance, ideally with connection pooling enabled through a tool such as 
+PgBouncer, would either confirm this explanation by eliminating the failu re or reveal a 
+deeper protocol-level issue that would need further investigation; this specific re -test is 
+recommended as an immediate item of future work in Section 5.2 rather than claimed 
+here as a result already obtained. 
+The 11.4-second average latency in Profile 5, the highest observed, is still well within the 
+30-second target and is not a concern for practical use. Even in the worst case tested, a 
+trainee who reconnects after hours of offline attendance recording will h ave all their 
+records confirmed on the server in under 12 seconds. Future optimisation could reduce 
+this further by using HTTP/2 persistent connections or by breaking very large batches 
+into smaller parallel requests, but neither change is necessary to meet the current targets. 
+4.2.3 Discussion of Usability Results 
+--- PAGE 84 ---
+ 
+66 
+The usability rating of 4.6 out of 5 from Facilitators is a strong result that indicates the 
+system is genuinely easy to use in a real training environment, not just in controlled 
+testing. The most common positive comments from Facilitators were about the speed of 
+the process, the real-time attendance count visible on screen during the session, and the 
+ability to close the session with a single button rather than collecting and filing a paper 
+register. Several Facilitators mentioned that seeing the attendan ce count update in real 
+time helped them notice when expected trainees had not yet scanned, which gave them a 
+natural reason to check on absent trainees. 
+The trainee rating of 4.4 out of 5 is also positive. Trainees noted that scanning was faster 
+than queuing to sign a register in a large cohort, and that the confirmation message 
+appearing on screen immediately after scanning removed any uncertainty about w hether 
+their attendance had been recorded. The most common concern raised by trainees was the 
+need to have mobile data or WiFi enabled for the device UUID to be set up correctly at 
+first login. This is a minor setup requirement that occurs only once, but it should be made 
+clearer in the onboarding flow of the app. 
+The ratings from both groups are higher than those reported by Salleh et al. (2017) for 
+their online QR attendance system, which averaged 3.8 from students in a comparable 
+evaluation. This difference may reflect the fact that the offline capability of this  system 
+eliminates the frustration of failed scans when the network is unavailable, which Salleh 
+et al. identified as one of the main sources of negative feedback in their evaluation. 
+4.2.4 Threats to Validity 
+Beyond the four limitations discussed fully in Section 5.1.5, it is useful to consider the 
+results in Chapter 4 in terms of the standard categories of validity used in empirical 
+software engineering research, namely construct, internal, and external validi ty, to be 
+explicit about exactly what kind of confidence the reported figures support. 
+Construct validity concerns whether the metrics defined in Table 3.6 actually measure the 
+concepts they are intended to measure. The fraud detection rate is measured directly as a 
+count of blocked versus successful attempts, which is a direct and largely u nambiguous 
+operationalisation of the underlying concept of fraud resistance. The usability rating, by 
+contrast, is a single five-point post-session score, which is a coarser and more subjective 
+construct than the others; a more elaborate instrument, such a s the multi -item System 
+--- PAGE 85 ---
+ 
+67 
+Usability Scale used in some human-computer interaction research, might have captured 
+a richer picture of the usability construct than the single rating collected here, and this is 
+acknowledged as a legitimate simplification made for practicality within th e scope of a 
+single project. 
+Internal validity concerns whether the experimental design itself supports the causal 
+claims made from it. The fraud simulation and synchronisation experiments were 
+conducted under directly controlled conditions, with the researcher supervising every 
+attempt and recording outcomes immediately, which supports reasonably strong internal 
+validity for those two experiments. The comparative evaluation against manual 
+attendance in Section 4.1.6, however, necessarily involved introducing simulated proxy 
+signatures into the paper register under the researcher's control, since real proxy 
+attendance could not ethically or practically be solicited from trainees against their own 
+paper records; this means the manual-attendance figures for proxy detection specifically 
+should be read as an estimate of what a paper register would catch under a comparable 
+rate of proxy attempts, rather than as a naturalistic measurement of proxy attendance that 
+occurred entirely independently of the study. 
+External validity concerns how far the results generalise beyond the specific conditions 
+tested, and is the category most directly addressed by the limitations already set out in 
+Section 5.1.5: a single organisation, a single 40 -trainee cohort, an under -benchmarked 
+test server, an Android-only implementation, and a fraud simulation that, while covering 
+four attack strategies, cannot claim to have anticipated every conceivable method a 
+determined and technically sophisticated attacker might attempt in the fu ture. The 
+recommendations in Section 5.2 for a larger, multi -organisation evaluation and for the 
+specific Profile 6 re -test are the concrete response to these external validity concerns, 
+rather than a claim that the current results are somehow insufficient  or unreliable within 
+the scope in which they were obtained. 
+4.2.5 Summary of Results Against Targets 
+Table 4.7 below provides a complete summary of all eight evaluation metrics, comparing 
+the targets defined before development began, and listed in Table 3.6, with the measured 
+results from the experiments. 
+--- PAGE 86 ---
+ 
+68 
+Metric Target Measured Result Pass / Fail 
+Fraud detection rate ≥ 95% 98.3% PASS 
+Sync reliability ≥ 98% 99.5% PASS 
+Offline availability 100% functional 100% PASS 
+QR expiry enforcement 100% rejected 100% PASS 
+Average sync latency < 30 seconds 6.7 s average PASS 
+Duplicate records on server Zero 0 PASS 
+QR scan-to-confirm speed < 2 s average 1.4 s / 1.2 s / 1.3 s PASS 
+App crashes in 100 sessions Zero 0 PASS 
+All eight metrics passed their minimum targets. This means the system meets all the 
+performance requirements defined in the evaluation plan and is ready for deployment at 
+CivilSalt Bamenda's training programmes. The main research question asked whether the 
+system could outperform both existing online QR systems and manual paper registers. 
+The results confirm that it does: it matches or exceeds the data integrity of online QR 
+systems while adding full offline capability, and it dramatically outperforms the p aper 
+register in speed, fraud prevention, and data accuracy. 
+--- PAGE 87 ---
+ 
+69 
+CHAPTER 5: CONCLUSIONS AND RECOMMENDATIONS 
+5.1 Conclusions 
+This project set out to design, implement, and experimentally evaluate an offline-capable 
+smart attendance system using QR codes and secure synchronisation for CivilSalt 
+Bamenda. All four specific objectives were met, all eight evaluation metrics passed their 
+minimum targets, and the experimental results confirm that the system outperforms both 
+existing online QR code systems and manual paper registers across every measured 
+dimension. 
+5.1.1 Conclusion on Objective 1: QR Code Module 
+The first objective was to design and implement a QR code module that produces time -
+limited, HMAC -SHA256 cryptographically signed, session -specific codes that can be 
+fully validated on the trainee's device without any server connectivity. This objective was 
+met fully. The QR payload format encodes the session ID, programme code, expiry 
+timestamp, and HMAC -SHA256 signature, and the step -by-step generation and 
+verification pipeline is described in full in Sections 3.5.2 and 3.5.5. The session secret 
+required to produce the signature is held only on the server and, transiently, the 
+Facilitator's phone, making it impossible for a trainee to forge a valid code. The five-step 
+local validation process runs in an average of 1.4 seconds on the lowest-specification test 
+device, well within the two -second target. The expiry mechanism blocked 100 per cent 
+of post-expiry scan attempts in testing, and, following the corrections made in response 
+to the supervisory review, the expiry window itself is now a configurable per -session 
+parameter rather than a fixed constant, as described in Section 3.5.6. 
+5.1.2 Conclusion on Objective 2: Offline-First Mobile Application 
+The second objective was to develop an offline -first mobile application that captures, 
+validates, and stores attendance records locally using SQLite without requiring server 
+connectivity. This objective was met fully. The application remained completely 
+functional across 100 consecutive offline scan sessions on each of three test devices, with 
+zero crashes. Records were stored reliably in the local SQLite database with the correct 
+schema and constraints. The pending_sync flag system correctly tracked which records 
+--- PAGE 88 ---
+ 
+70 
+were still waiting to be uploaded. The app's offline mode was indistinguishable from its 
+online mode from the trainee's perspective: the scanner, the confirmation message, and 
+the history screen all worked exactly the same way regardless of connectivity. 
+5.1.3 Conclusion on Objective 3: Security Mechanisms 
+The third objective was to implement and evaluate device -binding and duplication -
+prevention security mechanisms, measuring their effectiveness through controlled proxy 
+attendance simulation experiments. This objective was met. The fraud detection rate 
+across 120 controlled proxy attempts was 98.3 per cent, exceeding the 95 per cent target. 
+Screenshot sharing, screen mirroring, and manual payload entry were blocked 100 per 
+cent of the time by the combination of HMAC signature verification and device UUID 
+checking. The physical phone-lending attack had a detection rate of 93.3 per cent, 28 of 
+30 attempts blocked, meaning 2 of 30 attempts succeeded, both within the first two 
+minutes of the expiry window as shown in Table 4.2. This remains the primary limitation 
+of the device-binding approach, and Sections 3.5.6, 3.6.5, and 4.2.1 set out, respectively, 
+the configurable expiry window now implemented to narrow this gap, and the biometric 
+confirmation step identified as the only mechanism capable of closing it entir ely. Zero 
+duplicate records were produced in the database across all testing. 
+5.1.4 Conclusion on Objective 4: Synchronisation Protocol 
+The fourth objective was to design, implement, and evaluate a secure background 
+synchronisation protocol, measuring its success rate, latency, and data integrity. This 
+objective was met. The protocol achieved a synchronisation success rate of 99.5 per cent 
+across 1,300 offline records and 50 test cycles, exceeding the 98 per cent target. The 
+average synchronisation latency was 6.7 seconds, well below the 30 -second target. Zero 
+duplicate records were found on the server across all 50 test cycles, confirming that the 
+idempotency key mechanism is effective. The server-side re-validation pipeline correctly 
+detected and rejected 2 records with unusual clock deviations, demonstrating that the 
+security layer on the server adds meaningful protection beyond what is c hecked on the 
+phone. 
+ 
+--- PAGE 89 ---
+ 
+71 
+5.1.5 General Conclusion 
+The main research question asked whether this system could outperform existing online 
+QR and manual attendance systems in fraud prevention, synchronisation reliability, and 
+data integrity in low -connectivity environments. The experimental results answer th is 
+question positively. Compared with the paper register, the system reduced attendance 
+recording time by 71 per cent, detected all five simulated proxy attempts that the paper 
+register missed entirely, and produced zero data errors versus three in the paper sessions. 
+Compared with online QR systems as described in the literature, the system adds full 
+offline capability and a rigorous multi -metric experimental evaluation that confirms the 
+system's effectiveness under real-world conditions. 
+The system is ready for deployment at CivilSalt Bamenda and at comparable technology 
+training organisations in Cameroon and across sub -Saharan Africa. It requires no 
+hardware investment beyond the Android phones that trainees and facilitators already 
+own. It can be installed from an APK file without needing the Google Play Store. It works 
+under the network conditions that are normal at CivilSalt Bamenda, including extended 
+periods of complete offline operation. 
+These conclusions must, however, be read together with four specific limitations, clarified 
+here in direct response to the supervisory review conducted prior to public defence. First, 
+the evaluation was conducted with a single cohort of 40 trainees within a single 
+organisation, CivilSalt Bamenda, rather than across multiple organisations or multiple 
+cohorts of differing sizes. The fraud simulation and synchronisation experiments involved 
+a controlled rather than a fully naturalistic setting, and the compara tive evaluation 
+involved only these 40 trainees across five sessions. While the results are internally 
+consistent and meet all eight pre -defined targets, generalisation claims should be 
+tempered accordingly pending a larger, multi-department or multi-organisation study, and 
+the figures reported in Chapter 4 should be read as evidence obtained at one deployment 
+site rather than as universally representative performance figures. 
+Second, as reported in Table 3.5 and discussed in Section 4.2.2, the synchronisation test 
+server was a modest 2 vCPU, 4 GB RAM cloud instance running PostgreSQL 14 with 
+default settings, and the single database -locking failure observed in the Profile 6 
+concurrent multi -device test is most plausibly attributed to this under -provisioning, 
+although no CPU, memory, or lock -contention benchmarking data was collected at the 
+--- PAGE 90 ---
+ 
+72 
+time to confirm this explanation directly. A production deployment on a more generously 
+specified and properly tuned server should not encounter this issue, but, in the absence of 
+confirming benchmarking evidence, this remains a reasoned inference rather t han a 
+demonstrated fact, and Section 5.2 below carries this forward as a specific 
+recommendation for further testing. 
+Third, the physical phone-lending attack cannot be fully blocked by software alone. This 
+is a limitation shared by all device -binding systems and is discussed fully in Sections 
+3.6.5 and 4.2.1. The implication is that the reported overall fraud detection r ate of 98.3 
+per cent should be understood as the rate achievable against software-based attacks when 
+device binding, HMAC-SHA256 signing, and a time-limited expiry window are in place. 
+Any scenario in which two trainees physically collaborate using the registered device falls 
+outside the scope of what the current system can address without the addition of a 
+biometric verification step, whose feasibility is discussed in Section 3.6.5. 
+Fourth, the system has only been tested on Android, and this should be stated plainly 
+rather than left implicit: the current background synchronisation service, described in 
+Section 3.8, depends specifically on Android's background execution modes, accesse d 
+through the connectivity_plus and related Flutter plugins used in this implementation. 
+The Flutter codebase supports cross -platform compilation in principle, but iOS imposes 
+materially stricter restrictions on background execution than Android does, and no iOS-
+specific background synchronisation implementation has been written or tested for this 
+project. Readers, examiners, and any organisation considering deployment should 
+therefore not read the reported synchronisation results, in particular the 99.5 pe r cent 
+success rate and 6.7-second average latency in Section 4.1.3, as applying to iOS devices; 
+they describe Android behaviour only, and a separate implementation and a separate 
+round of testing using iOS's BackgroundTasks framework would be required bef ore any 
+equivalent claim could be made for iOS. 
+ 
+ 
+ 
+ 
+--- PAGE 91 ---
+ 
+73 
+5.2 Recommendations 
+Based on the results, the limitations identified during testing, and the corrections 
+requested during the supervisory review prior to public defence, the following 
+recommendations are made for deployment and future development. 
+1. The QR code expiry window should remain configurable by the Facilitator when 
+creating a session, as implemented in Section 3.5.6 in direct response to the 
+supervisory recommendation. The default should remain 15 minutes for regular 
+training sessions. For h igh-stakes sessions such as end -of-cohort assessment 
+attendance checks, the Facilitator should continue to use the 5 -minute High-Stakes 
+preset. This closes the specific two-minute time margin identified in Table 4.2 more 
+effectively without inconveniencing  trainees in normal training sessions, and any 
+future deployment should retain this as a per -session choice rather than reverting to 
+a single fixed value. 
+2. A biometric confirmation step should be added at scan time in a future version of the 
+app, as analysed in detail in Section 3.6.5 in direct response to the supervisory 
+recommendation. Using Flutter's local_auth package, the app should require a 
+fingerprint or face -recognition confirmation immediately after the QR scan is 
+confirmed valid but before the record is written to the database. This is the only 
+mechanism identified in this project that would raise the fraud detection rate to 
+effectively 100 per cent by making it impossible for anyone other than the registered 
+trainee's own biometric owner to record attendance, even when that person is holding 
+the registered phone. Implementing and experimentally re -evaluating this step, 
+specifically re-running the ph one-lending strategy of the fraud simulation with the 
+biometric check enabled, is recommended as the immediate next development 
+priority. 
+3. The server hardware specification used for future synchronisation testing should 
+continue to be reported explicitly, as done in Table 3.5 in direct response to the 
+supervisory recommendation, and Profile 6, the concurrent multi -device 
+synchronisation test, should be re-run on a more generously provisioned PostgreSQL 
+instance, for example with at least 8 GB of RAM and connection pooling enabled 
+through PgBouncer, together with CPU, memory, and lock-contention benchmarking 
+captured during the test. This would  either confirm that under-provisioning was the 
+--- PAGE 92 ---
+ 
+74 
+cause of the single observed locking failure or reveal a deeper protocol -level issue 
+requiring further design work, and would close the evidentiary gap noted in Sections 
+4.2.2 and 5.1.5. 
+4. The system should be extended to support iOS. The core Flutter codebase is cross -
+platform, but, as clarified in Section 5.1.5, the background synchronisation service 
+uses Android -specific background execution modes. A separate background 
+execution implementation using iOS's BackgroundTasks framework would need to 
+be developed and tested independently to ensure reliable sync on Apple devices, and 
+the synchronisation results in Section 4.1.3 should not be assumed to transfer to that 
+implementation without new experiments. 
+5. A larger-scale evaluation involving multiple organisations, or at minimum multiple 
+cohorts of differing sizes within CivilSalt Bamenda, should be conducted. The 
+current evaluation involved one cohort of 40 trainees. Running the system across 
+several cohort s with different sizes, different network conditions, and different 
+trainee profiles would provide stronger and more generalisable evidence for the 
+system's effectiveness, directly addressing the generalisation caveat set out in Section 
+5.1.5. 
+6. The Administrator and Facilitator dashboards should be expanded with better tools for 
+the conflict_log and integrity_log tables introduced in Section 3.6.4. Currently, these 
+logs are accessible through the API and display basic information. A well -designed 
+visual interface with filtering, search, and resolution workflows would make it much 
+easier for non -technical Facilitators and Administrators to investigate and resolve 
+flagged records. 
+7. The system should be integrated with CivilSalt Bamenda's existing trainee registration 
+records so that trainee identification numbers, programme enrolments, and facilitator 
+assignments do not need to be entered manually into the app. This integration would 
+reduce setup time when deploying the system to a new cohort or a new organisation 
+and would keep the attendance system's data consistent with the organisation's 
+official enrolment records. 
+8. A notification system should be added to alert Facilitators when synchronisation 
+conflicts or integrity violations are detected for their sessions. Currently, these events 
+are logged in the database but the Facilitator is not notified directly. An in -app 
+--- PAGE 93 ---
+ 
+75 
+notification and, optionally, an email alert would help Facilitators take appropriate 
+action quickly. 
+--- PAGE 94 ---
+ 
+76 
+REFERENCES 
+Adepoju, S. A. and Shehu, I. S. (2014). Evaluation of legacy and cloud computing models 
+for e-learning services. African Journal of Computing and ICT, 7(2): 59-68. 
+Arora, S., Sharma, P. and Jain, A. (2021). Device fingerprinting for mobile authentication 
+and fraud prevention. International Journal of Information Security, 20(3): 411-425. 
+Davis, F. D. (1989). Perceived usefulness, perceived ease of use, and user acceptance of 
+information technology. MIS Quarterly, 13(3): 319-340. 
+Hevner, A. R., March, S. T., Park, J. and Ram, S. (2004). Design science in information 
+systems research. MIS Quarterly, 28(1): 75-105. 
+Ibrahim, N., Yusof, Y. and Salleh, S. (2019). QR code-based attendance system for higher 
+education: A usability study. Journal of Advanced Research in Dynamical and 
+Control Systems, 11(7): 1234-1241. 
+Idris, N., Ahmad, R. and Hassan, R. (2017). Proxy attendance detection in higher 
+education institutions using machine learning. Journal of Theoretical and Applied 
+Information Technology, 95(18): 4463-4471. 
+Kleppmann, M. and Beresford, A. R. (2019). A conflict -free replicated JSON datatype. 
+IEEE Transactions on Parallel and Distributed Systems, 28(10): 2733-2746. 
+Koskinen, J., Leppanen, M. and Mikkonen, T. (2021). SQLite as a mobile database for 
+offline-first applications: Performance evaluation. Proceedings of the ACM 
+Symposium on Applied Computing, pp. 532-539. 
+Mtebe, J. S., Dachi, H. and Raphael, C. (2020). Integrating ICT into teaching and learning 
+at the University of Dar es Salaam. Australasian Journal of Educational Technology, 
+27(6): 1033-1048. 
+Salau, A. O., Garba, E. J. and Olorunfemi, D. L. (2019). Automated attendance 
+management system using mobile devices. Nigerian Journal of Technology, 38(3): 
+749-758. 
+Salleh, N. A., Arshad, H. and Ibrahim, Z. (2017). QR code mobile -based attendance 
+system. AIP Conference Proceedings, 1830(1): 080011. 
+--- PAGE 95 ---
+ 
+77 
+Unar, J. A., Seng, W. C. and Abbasi, A. (2014). A review of biometric technology along 
+with trends and prospects. Pattern Recognition, 47(8): 2673-2688. 
+Zorkadis, V., Karras, D. A. and Panayotou, M. (2015). Efficient information theoretic 
+privacy-preserving systems for QR code applications. Computers and Security, 53: 
+93-109. 
+ 
+--- PAGE 96 ---
+ 
+78 
+APPENDICES 
+Appendix A: QR Payload Verification Algorithm  Step-by-Step 
+Pseudocode 
+The pseudocode below describes all five steps of the QR payload verification process that 
+runs on the Trainee's phone, corresponding directly to the narrative description in Section 
+3.5.5 and the sequence diagram in Figure 3.5. The entire process runs with out any 
+network request. 
+FUNCTION verifyQRPayload(rawPayload, cachedSecret, traineeId, sessionId, deviceUUID):  
+  
+  // STEP 1: Parse the raw QR string 
+  parts = rawPayload.split('|') 
+  IF parts.length != 4 THEN 
+    RETURN ERROR('QR code format is not valid - cannot read the code') 
+  END IF 
+  sessionIdInQR = parts[0] 
+  programmeCode = parts[1] 
+  expiryUnix = INTEGER(parts[2]) 
+  signatureInQR = parts[3] 
+  
+  // STEP 2: Verify the HMAC-SHA256 signature 
+  payloadBase = sessionIdInQR + '|' + programmeCode + '|' + expiryUnix 
+  expectedSig = HMAC_SHA256(payloadBase, cachedSecret) 
+  IF expectedSig != signatureInQR THEN 
+    RETURN ERROR('QR code is not valid - it may have been tampered with or shared') 
+  END IF 
+  
+  // STEP 3: Check whether the QR code has expired 
+  currentTime = getCurrentUnixTimestamp() 
+  CLOCK_TOLERANCE = 300  // 5 minutes allowed for clock differences 
+  IF currentTime > (expiryUnix + CLOCK_TOLERANCE) THEN 
+    RETURN ERROR('QR code has expired - ask the facilitator to refresh it') 
+  END IF 
+  
+  // STEP 4: Check whether this is the registered device 
+  IF getDeviceUUID() != deviceUUID THEN 
+    RETURN ERROR('This phone is not registered to your account') 
+  END IF 
+  
+  // STEP 5: Check for duplicate in the local database 
+  IF localDatabase.exists(traineeId, sessionId, deviceUUID) THEN 
+    RETURN ERROR('Attendance for this session is already recorded on this device') 
+  END IF 
+  
+  // All checks passed: save the record locally 
+--- PAGE 97 ---
+ 
+79 
+  idempotencyKey = deviceUUID + '|' + sessionId + '|' + (currentTime * 1000) 
+  localDatabase.insert(traineeId, sessionId, deviceUUID, currentTime, idempotencyKey) 
+  RETURN SUCCESS('Attendance recorded') 
+  
+END FUNCTION 
+ 
+Appendix B: Database Schema  Key Tables 
+Table B.1: users table stores registered Facilitators and Trainees 
+Column Type Constraints Description 
+id UUID PRIMARY KEY Unique user identifier 
+email VARCHAR(254) UNIQUE, NOT 
+NULL Login email address 
+first_name VARCHAR(100) NOT NULL First name 
+last_name VARCHAR(100) NOT NULL Last name 
+registration_number VARCHAR(50) UNIQUE, 
+NULLABLE Trainee or staff ID number 
+role VARCHAR(10) DEFAULT 'trainee' trainee, facilitator, or admin 
+device_uuid VARCHAR(255) NULLABLE Bound device UUID 
+device_bound_at TIMESTAMP NULLABLE When device was first bound 
+is_active BOOLEAN DEFAULT TRUE Account active flag 
+date_joined TIMESTAMP AUTO Registration timestamp 
+Table B.2: attendance_sessions table stores each attendance session 
+Column Type Constraints Description 
+id UUID PRIMARY KEY Unique session identifier 
+programme_id UUID FK to programmes Which programme this 
+session belongs to 
+created_by UUID FK to users Which Facilitator opened 
+the session 
+session_secret VARCHAR(128) NOT NULL HMAC key for QR signing 
+status VARCHAR(10) DEFAULT 'open' open, closed, or expired 
+expiry_window_seconds INTEGER DEFAULT 900 Configurable QR expiry 
+window (FR-16) 
+--- PAGE 98 ---
+ 
+80 
+Column Type Constraints Description 
+started_at TIMESTAMP AUTO Session creation time 
+expires_at TIMESTAMP NOT NULL Current QR code expiry 
+time 
+closed_at TIMESTAMP NULLABLE When session was 
+manually closed 
+venue VARCHAR(200) NULLABLE Optional room or location 
+Table B.3: attendance_records table stores individual attendance entries 
+Column Type Constraints Description 
+id UUID PRIMARY KEY Unique record identifier 
+trainee_id UUID FK to users Trainee who scanned 
+session_id UUID FK to sessions Session that was scanned 
+device_uuid VARCHAR(255) NOT NULL UUID of scanning device 
+scan_source VARCHAR(10) DEFAULT 'offline' online or offline 
+scanned_at TIMESTAMP NOT NULL Device time at scan 
+synced_at TIMESTAMP NULLABLE Server receive time 
+idempotency_key VARCHAR(512) UNIQUE Duplicate prevention key 
+hmac_signature VARCHAR(128) NULLABLE Signature from QR code 
+pending_sync BOOLEAN DEFAULT TRUE Not yet uploaded flag 
+— UNIQUE 
+CONSTRAINT 
+(trainee_id, 
+session_id, 
+device_uuid) 
+Prevent duplicates 
+Table B.4: training_programmes table  stores CivilSalt Bamenda training programmes 
+and cohorts 
+Column Type Constraints Description 
+id UUID PRIMARY KEY Unique programme identifier 
+programme_code VARCHAR(20) UNIQUE, NOT 
+NULL Short code, e.g. WDB07 
+title VARCHAR(200) NOT NULL Programme title, e.g. Web 
+Development Bootcamp 
+cohort_label VARCHAR(50) NOT NULL Cohort identifier, e.g. Cohort 
+7 
+--- PAGE 99 ---
+ 
+81 
+Column Type Constraints Description 
+facilitator_id UUID FK to users Lead Facilitator for the 
+programme 
+start_date DATE NOT NULL Cohort start date 
+end_date DATE NULLABLE Cohort end date 
+Table B.5: sync_batches table — records each synchronisation attempt for audit purposes 
+Column Type Constraints Description 
+id UUID PRIMARY KEY Unique batch identifier 
+device_uuid VARCHAR(255) NOT NULL Device that submitted the 
+batch 
+submitted_at TIMESTAMP AUTO Time the batch was received 
+record_count INTEGER NOT NULL Number of records in the 
+batch 
+accepted_count INTEGER NOT NULL Records accepted as new 
+duplicate_count INTEGER NOT NULL Records recognised as 
+duplicates 
+rejected_count INTEGER NOT NULL Records rejected on re-
+validation 
+Table B.6: integrity_log table — stores every rejected scan with its reason, per FR-14 
+Column Type Constraints Description 
+id UUID PRIMARY KEY Unique log entry identifier 
+session_id UUID FK to sessions Session the rejected scan 
+targeted 
+device_uuid VARCHAR(255) NULLABLE Device that attempted the 
+scan, if known 
+rejection_reason VARCHAR(50) NOT NULL e.g. invalid_signature, 
+expired, wrong_device 
+raw_payload TEXT NULLABLE The rejected QR payload, 
+stored for review 
+logged_at TIMESTAMP AUTO Time of the rejected attempt 
+Table B.7: conflict_log table flags cases of the same trainee -session pair recorded from 
+two devices, per FR-15 
+--- PAGE 100 ---
+ 
+82 
+Column Type Constraints Description 
+id UUID PRIMARY KEY Unique conflict entry 
+identifier 
+trainee_id UUID FK to users Trainee involved in the 
+conflict 
+session_id UUID FK to sessions Session involved in the 
+conflict 
+device_uuid_1 VARCHAR(255) NOT NULL First device involved 
+device_uuid_2 VARCHAR(255) NOT NULL Second device involved 
+resolved BOOLEAN DEFAULT FALSE Whether a Facilitator has 
+reviewed the conflict 
+flagged_at TIMESTAMP AUTO Time the conflict was 
+detected 
+Appendix C: Budget and Cost Estimate 
+Table C.1 presents the itemised budget for this project, matching the estimate from the 
+original research proposal. 
+Item Qty Unit Cost (XAF) Total (XAF) 
+Android smartphone for testing (Tecno 
+Spark 20) 1 85,000 85,000 
+Internet subscription — 6 months 6 5,000 30,000 
+Cloud server hosting — 6 months 6 8,000 48,000 
+Printing and stationery 1 15,000 15,000 
+Transport and miscellaneous expenses 1 20,000 20,000 
+TOTAL — — 198,000 
+Appendix D: Project Schedule Gantt Chart 
+Table D.1 shows the project timeline across six months from the date of proposal 
+approval. 
+--- PAGE 101 ---
+ 
+83 
+Activity M1 M2 M3 M4 M5 M6 
+Literature Review and Requirements 
+Analysis ✓ ✓     
+System Design, SRS and Architecture  ✓ ✓    
+Flutter Mobile Application Development   ✓ ✓   
+Django REST Backend Development   ✓ ✓   
+Integration and Functional Testing    ✓ ✓  
+Experimental Evaluation and Data Collection     ✓ ✓ 
+Report Writing and Submission     ✓ ✓ 
+Appendix E: Sample Attendance Report 
+Table E.1 shows an example of a session attendance report as generated by the system 
+for a Web Development Bootcamp session at CivilSalt Bamenda. 
+Trainee Name Reg. Number Scan Time Source Status 
+Sample Trainee A CS-TR-0101 08:03:41 Online Present 
+Sample Trainee B CS-TR-0102 08:04:12 Online Present 
+Sample Trainee C CS-TR-0103 08:05:30 Offline Present (Synced) 
+Sample Trainee D CS-TR-0104 08:06:47 Offline Present (Synced) 
+Sample Trainee E CS-TR-0105 08:07:22 Online Present 
+Sample Trainee F CS-TR-0106 — — Absent 
+Sample Trainee G CS-TR-0107 08:08:15 Offline Present (Synced) 
+Sample Trainee H CS-TR-0108 — — Absent 
+Appendix F: Requirements Elicitation Interview Guide 
+The questions below formed the semi -structured interview guide used with the field 
+supervisor and CivilSalt Bamenda training staff during the requirements elicitation 
+activity referenced in Section 3.2.2, together with the direct observation of three paper -
+register sessions that supplemented the interview data. 
+--- PAGE 102 ---
+ 
+84 
+# Interview Question Requirement(s) 
+Informed 
+1 How is attendance currently recorded for a training session, from the 
+start of the session to the point the record is filed? FR-1, FR-3 
+2 What problems, if any, have you noticed with the paper register, 
+including any suspected cases of one trainee signing for another? 
+FR-2, FR-5, FR-6, 
+NFR-3 
+3 How reliable is the internet connection in the training halls, 
+particularly during peak hours? NFR-2, FR-8, FR-9 
+4 What devices do trainees typically own, and are there trainees 
+without a smartphone? NFR-6 
+5 
+Are there sessions, such as end-of-cohort assessments, where 
+attendance matters more and stricter checks would be acceptable 
+even if slightly less convenient? 
+FR-16 
+6 What reports or summaries would be useful for facilitators and 
+management at the end of a cohort? FR-12 
+7 What would happen if a trainee lost or changed their phone partway 
+through a cohort? FR-13 
+8 What budget and hardware constraints should the system be 
+designed around? NFR-9 
+Appendix G: Informed Consent Script Used in the Fraud Simulation 
+Experiment 
+The text below is the informed consent script read to each trainee before they took part in 
+the fraud simulation experiment described in Sections 3.10 and 3.11. 
+“Thank you for agreeing to help test this attendance system. I am going to ask you to try 
+one specific method of getting the system to record attendance for a session you did not 
+actually attend in the normal way. This is part of an academic research project to find out 
+how well the system resists this kind of attempt, and your participation is completely 
+voluntary. You may stop at any point without giving a reason, and doing so will not affect 
+your standing in your training programme at CivilSalt Bamenda i n any way. Your name 
+will not be recorded against your specific attempt; results are recorded only by the type 
+of method used. If you are being asked to lend your own registered phone to a colleague 
+as part of this specific test, this will only happen with your explicit agreement, using our 
+--- PAGE 103 ---
+ 
+85 
+test session, and will not affect your own genuine attendance record. Do you agree to take 
+part on this basis?” 
+Verbal agreement was obtained and recorded by the researcher before each attempt began, 
+consistent with the ethical considerations set out in Section 3.11. 
+Appendix H: Source Code Excerpts  QR Signing and Verification 
+The two code excerpts below show the actual implementation of the HMAC -SHA256 
+signing step on the server, written in Python, and the corresponding verification step on 
+the device, written in Dart, referenced throughout Section 3.5. Import statements and 
+error-handling boilerplate unrelated to the cryptographic logic have been omitted for 
+brevity. 
+H.1 Server-side payload signing (Python / Django) 
+import hmac, hashlib, time, secrets 
+  
+def generate_session_secret(): 
+    # 256-bit cryptographically secure random key, per Section 3.5.2 Step 1 
+    return secrets.token_hex(32) 
+  
+def build_signed_payload(session_id, programme_code, session_secret, expiry_window_seconds):  
+    expiry_unix = int(time.time()) + expiry_window_seconds 
+    payload_base = f"{session_id}|{programme_code}|{expiry_unix}" 
+    signature = hmac.new( 
+        key=session_secret.encode('utf-8'), 
+        msg=payload_base.encode('utf-8'), 
+        digestmod=hashlib.sha256 
+    ).hexdigest() 
+    return f"{payload_base}|{signature}" 
+ 
+H.2 On-device verification (Dart / Flutter) 
+import 'package:crypto/crypto.dart'; 
+import 'dart:convert'; 
+  
+class QRVerificationResult { 
+  final bool isValid; 
+  final String? errorMessage; 
+  QRVerificationResult(this.isValid, this.errorMessage); 
+} 
+  
+QRVerificationResult verifyQRPayload( 
+    String rawPayload, String cachedSecret, String registeredDeviceUUID) { 
+  final parts = rawPayload.split('|'); 
+--- PAGE 104 ---
+ 
+86 
+  if (parts.length != 4) { 
+    return QRVerificationResult(false, 'QR code format is not valid'); 
+  } 
+  final sessionId = parts[0]; 
+  final programmeCode = parts[1]; 
+  final expiryUnix = int.parse(parts[2]); 
+  final signatureInQR = parts[3]; 
+  
+  final payloadBase = '$sessionId|$programmeCode|$expiryUnix'; 
+  final hmacSha256 = Hmac(sha256, utf8.encode(cachedSecret)); 
+  final expectedSignature = hmacSha256.convert(utf8.encode(payloadBase)).toString(); 
+  
+  if (!_constantTimeEquals(expectedSignature, signatureInQR)) { 
+    return QRVerificationResult(false, 'QR code signature is not valid'); 
+  } 
+  final nowUnix = DateTime.now().millisecondsSinceEpoch ~/ 1000; 
+  const clockToleranceSeconds = 300; 
+  if (nowUnix > expiryUnix + clockToleranceSeconds) { 
+    return QRVerificationResult(false, 'QR code has expired'); 
+  } 
+  return QRVerificationResult(true, null); 
+} 
+ 
+The constant -time comparison function referenced above, _constantTimeEquals, 
+deliberately avoids the built -in string equality operator and instead compares every 
+character regardless of where the first mismatch occurs, for the timing -attack reason 
+explained in Section 3.5.4. 

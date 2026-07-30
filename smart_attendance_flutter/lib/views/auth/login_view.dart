@@ -94,10 +94,10 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                             border: Border.all(
-                                color: Colors.white.withOpacity(0.3), width: 2),
+                                color: Colors.white.withValues(alpha: 0.3), width: 2),
                           ),
                           child: const Icon(Icons.qr_code_scanner,
                               color: Colors.white, size: 40),
@@ -111,7 +111,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                         const SizedBox(height: 4),
                         Text('NAHPI · University of Bamenda',
                             style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
+                                color: Colors.white.withValues(alpha: 0.8),
                                 fontSize: 13)),
                       ],
                     ),
@@ -129,7 +129,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 30,
                               offset: const Offset(0, 10),
                             ),
@@ -210,7 +210,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                     child: Text(
                       'UBa25EP188 · MSc Computer Engineering',
                       style: TextStyle(
-                          color: AppTheme.textSecondary.withOpacity(0.7),
+                          color: AppTheme.textSecondary.withValues(alpha: 0.7),
                           fontSize: 11),
                     ),
                   ),

@@ -35,9 +35,12 @@ class _StudentHomeViewState extends State<StudentHomeView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthController>();
       final attCtrl = context.read<AttendanceController>();
-      attCtrl.loadRecords(auth.user!.id);
+      final user = auth.user;
+      if (user == null) return;
+
+      attCtrl.loadRecords(user.id);
       attCtrl.initSync(
-        studentId: auth.user!.id,
+        studentId: user.id,
         deviceUuid: auth.deviceUuid ?? '',
       );
       context.read<CourseController>().loadCourses();
@@ -216,7 +219,7 @@ class _StudentDashboard extends StatelessWidget {
                   Text(
                     auth.user?.registrationNumber ?? 'Track your attendance',
                     style: TextStyle(
-                        color: Colors.white.withOpacity(0.8), fontSize: 13),
+                        color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
                   ),
                 ],
               ),
@@ -233,10 +236,10 @@ class _StudentDashboard extends StatelessWidget {
                         horizontal: 12, vertical: 6),
                     margin: const EdgeInsets.only(right: 8, top: 10, bottom: 10),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                          color: Colors.white.withOpacity(0.4)),
+                          color: Colors.white.withValues(alpha: 0.4)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -259,7 +262,15 @@ class _StudentDashboard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              // Sync warning banner
+              _OfflineHeroCard(
+                pendingCount: pending,
+                syncedCount: synced,
+                totalCount: total,
+                onSync: () => _triggerSync(context, auth, attCtrl),
+                isSyncing: attCtrl.syncState == SyncState.syncing,
+              ),
+              const SizedBox(height: 16),
+
               if (pending > 0) ...[
                 _SyncBanner(
                   pendingCount: pending,
@@ -269,7 +280,6 @@ class _StudentDashboard extends StatelessWidget {
                 const SizedBox(height: 16),
               ],
 
-              // Stats
               GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
@@ -322,7 +332,7 @@ class _StudentDashboard extends StatelessWidget {
                       children: [
                         Icon(Icons.qr_code_2_outlined,
                             size: 56,
-                            color: AppTheme.textSecondary.withOpacity(0.4)),
+                            color: AppTheme.textSecondary.withValues(alpha: 0.4)),
                         const SizedBox(height: 12),
                         const Text(
                           'No attendance records yet.\nScan a QR code to get started.',
@@ -366,6 +376,161 @@ class _StudentDashboard extends StatelessWidget {
   }
 }
 
+class _OfflineHeroCard extends StatelessWidget {
+  final int pendingCount;
+  final int syncedCount;
+  final int totalCount;
+  final VoidCallback onSync;
+  final bool isSyncing;
+
+  const _OfflineHeroCard({
+    required this.pendingCount,
+    required this.syncedCount,
+    required this.totalCount,
+    required this.onSync,
+    required this.isSyncing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final syncRatio = totalCount == 0 ? 0.0 : syncedCount / totalCount;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withValues(alpha: 0.16),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.cloud_sync_outlined, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Offline attendance is live',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      pendingCount > 0
+                          ? '$pendingCount record${pendingCount > 1 ? 's' : ''} waiting to sync'
+                          : 'Every scan is verified locally before it reaches the server.',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 8,
+              value: syncRatio.clamp(0.0, 1.0),
+              backgroundColor: Colors.white.withValues(alpha: 0.14),
+              color: AppTheme.accent,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Row(
+            children: [
+              _InfoPill(label: 'HMAC-SHA256', dark: true),
+              SizedBox(width: 8),
+              _InfoPill(label: 'Device-bound', dark: true),
+              SizedBox(width: 8),
+              _InfoPill(label: 'Auto-sync', dark: true),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: pendingCount > 0 ? onSync : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppTheme.primary,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: isSyncing
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
+                    )
+                  : const Icon(Icons.sync_outlined, size: 18),
+              label: Text(
+                pendingCount > 0
+                    ? (isSyncing ? 'Syncing…' : 'Sync now')
+                    : 'No pending sync',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoPill extends StatelessWidget {
+  final String label;
+  final bool dark;
+
+  const _InfoPill({required this.label, this.dark = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: dark ? Colors.white.withValues(alpha: 0.14) : Colors.white.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: dark ? Colors.white.withValues(alpha: 0.2) : AppTheme.divider),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: dark ? Colors.white : AppTheme.textPrimary,
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
 class _SyncBanner extends StatelessWidget {
   final int pendingCount;
   final VoidCallback onSync;
@@ -382,9 +547,9 @@ class _SyncBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppTheme.warning.withOpacity(0.1),
+        color: AppTheme.warning.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.warning.withOpacity(0.4)),
+        border: Border.all(color: AppTheme.warning.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
@@ -448,8 +613,8 @@ class _RecentRecordTile extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: record.pendingSync
-                  ? AppTheme.warning.withOpacity(0.1)
-                  : AppTheme.success.withOpacity(0.1),
+                  ? AppTheme.warning.withValues(alpha: 0.1)
+                  : AppTheme.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(

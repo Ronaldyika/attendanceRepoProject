@@ -1,3 +1,4 @@
+import 'package:sqflite/sqflite.dart';
 import '../core/network/api_client.dart';
 import '../core/network/api_result.dart';
 import '../core/network/api_response_utils.dart';
@@ -137,7 +138,7 @@ class SessionService {
       'expiry_unix': session.expiryUnix,
       'attendance_count': session.attendanceCount,
       'synced_at': DateTime.now().toIso8601String(),
-    });
+    }, conflict: ConflictAlgorithm.replace);
   }
 
   Future<List<SessionModel>> _getLocalSessions() async {

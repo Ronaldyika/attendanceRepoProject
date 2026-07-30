@@ -4,10 +4,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 class ConnectivityService {
   static final ConnectivityService _instance = ConnectivityService._internal();
   factory ConnectivityService() => _instance;
-  ConnectivityService._internal();
+  ConnectivityService._internal()
+      : _connectivity = Connectivity(),
+        _controller = StreamController<bool>.broadcast();
 
-  final _connectivity = Connectivity();
-  final _controller = StreamController<bool>.broadcast();
+  ConnectivityService.testable({Connectivity? connectivity})
+      : _connectivity = connectivity ?? Connectivity(),
+        _controller = StreamController<bool>.broadcast();
+
+  final Connectivity _connectivity;
+  final StreamController<bool> _controller;
   bool _isOnline = false;
 
   bool get isOnline => _isOnline;

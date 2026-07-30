@@ -46,7 +46,7 @@ class FakeAuthService extends AuthService {
   Future<ApiResult<UserModel>> getProfile() async {
     profileCalls++;
     return profileResult ??
-        ApiResult.success(const UserModel(
+        const ApiResult.success(UserModel(
           id: 'u1',
           email: 'student@nahpi.cm',
           firstName: 'Jane',
@@ -57,6 +57,7 @@ class FakeAuthService extends AuthService {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('AuthController', () {
     test('marks the user authenticated when login succeeds', () async {
       final service = FakeAuthService();

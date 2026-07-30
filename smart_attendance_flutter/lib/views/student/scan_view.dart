@@ -196,6 +196,50 @@ class _ScanViewState extends State<ScanView>
           // Scanner overlay
           _ScannerOverlay(isProcessing: _isProcessing),
 
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.46),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.security_outlined, color: Colors.white, size: 18),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Secure local verification',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text(
+                              'HMAC-SHA256 checks, device binding and offline storage.',
+                              style: TextStyle(color: Colors.white70, fontSize: 11.5),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           // Status bar at bottom
           Positioned(
             bottom: 0,
@@ -243,7 +287,7 @@ class _ScannerOverlay extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
+                          color: Colors.black.withValues(alpha: 0.7),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Column(
@@ -266,11 +310,11 @@ class _ScannerOverlay extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Text(
-                'Point camera at the QR code',
+                'Point camera at the QR code and hold still',
                 style: TextStyle(color: Colors.white, fontSize: 14),
               ),
             ),
@@ -310,8 +354,11 @@ class _Corner extends StatelessWidget {
     top: top, left: left, right: right, bottom: bottom,
     child: Transform(
       alignment: Alignment.center,
-      transform: Matrix4.identity()
-        ..scale(flipH ? -1.0 : 1.0, flipV ? -1.0 : 1.0),
+      transform: Matrix4.diagonal3Values(
+        flipH ? -1.0 : 1.0,
+        flipV ? -1.0 : 1.0,
+        1.0,
+      ),
       child: SizedBox(
         width: size, height: size,
         child: CustomPaint(painter: _CornerPainter(color: color, thickness: thickness!)),
@@ -339,8 +386,8 @@ class _CornerPainter extends CustomPainter {
 class _OverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black.withOpacity(0.55);
-    final frameSize = 260.0;
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.55);
+    const frameSize = 260.0;
     final left = (size.width - frameSize) / 2;
     final top = (size.height - frameSize) / 2 + 40;
     final rect = RRect.fromRectAndRadius(
@@ -371,7 +418,7 @@ class _BottomStatusBar extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
-          colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+          colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
         ),
       ),
       child: Row(
@@ -457,10 +504,10 @@ class _ScanResultSheetState extends State<_ScanResultSheet>
               height: 72,
               decoration: BoxDecoration(
                 color: isDuplicate
-                    ? AppTheme.warning.withOpacity(0.1)
+                    ? AppTheme.warning.withValues(alpha: 0.1)
                     : isSuccess
-                        ? AppTheme.success.withOpacity(0.1)
-                        : AppTheme.error.withOpacity(0.1),
+                        ? AppTheme.success.withValues(alpha: 0.1)
+                        : AppTheme.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -495,20 +542,39 @@ class _ScanResultSheetState extends State<_ScanResultSheet>
             isDuplicate
                 ? 'You have already marked attendance for this session.'
                 : isSuccess && !isOnline
-                    ? 'Saved locally. Will sync automatically when online.'
+                    ? 'Verified locally and stored safely. It will sync automatically once connectivity is restored.'
                     : isSuccess
-                        ? 'Your attendance has been recorded on the server.'
-                        : 'Could not record attendance.',
+                        ? 'Your attendance is now confirmed and securely synced with the server.'
+                        : 'Could not record attendance. Please try again or ask your lecturer to refresh the session.',
             textAlign: TextAlign.center,
             style: const TextStyle(
                 fontSize: 13, color: AppTheme.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.speed_outlined, color: AppTheme.primary, size: 16),
+                SizedBox(width: 6),
+                Text(
+                  'Verified on-device before confirmation',
+                  style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
           ),
           if (isSuccess && !isOnline) ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppTheme.warning.withOpacity(0.1),
+                color: AppTheme.warning.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Row(

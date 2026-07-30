@@ -211,7 +211,7 @@ class _SummaryStat extends StatelessWidget {
                   fontWeight: FontWeight.w800)),
           Text(label,
               style: TextStyle(
-                  color: Colors.white.withOpacity(0.8), fontSize: 12)),
+                  color: Colors.white.withValues(alpha: 0.8), fontSize: 12)),
         ],
       ),
     );
@@ -250,7 +250,7 @@ class _StudentRateTile extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: color.withOpacity(0.12),
+            backgroundColor: color.withValues(alpha: 0.12),
             child: Text(name[0].toUpperCase(),
                 style: TextStyle(
                     color: color, fontWeight: FontWeight.w700)),

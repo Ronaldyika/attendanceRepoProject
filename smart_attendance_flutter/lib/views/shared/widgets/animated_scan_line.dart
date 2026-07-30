@@ -57,13 +57,13 @@ class _AnimatedScanLineState extends State<AnimatedScanLine>
               gradient: LinearGradient(
                 colors: [
                   Colors.transparent,
-                  AppTheme.accent.withOpacity(0.9),
+                  AppTheme.accent.withValues(alpha: 0.9),
                   Colors.transparent,
                 ],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.accent.withOpacity(0.6),
+                  color: AppTheme.accent.withValues(alpha: 0.6),
                   blurRadius: 8,
                   spreadRadius: 1,
                 ),

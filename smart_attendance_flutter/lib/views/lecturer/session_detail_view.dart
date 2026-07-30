@@ -219,7 +219,7 @@ class _SessionDetailViewState extends State<SessionDetailView>
                         if (session.venue?.isNotEmpty == true)
                           Text('📍 ${session.venue}',
                               style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withValues(alpha: 0.8),
                                   fontSize: 12)),
                       ],
                     ),
@@ -239,14 +239,14 @@ class _SessionDetailViewState extends State<SessionDetailView>
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                        color: AppTheme.primary.withOpacity(0.12),
+                        color: AppTheme.primary.withValues(alpha: 0.12),
                         blurRadius: 24,
                         offset: const Offset(0, 8)),
                   ],
                 ),
                 child: Column(
                   children: [
-                    Text('Scan to Mark Attendance',
+                    const Text('Scan to Mark Attendance',
                         style: TextStyle(
                             fontSize: 14,
                             color: AppTheme.textSecondary,
@@ -261,8 +261,8 @@ class _SessionDetailViewState extends State<SessionDetailView>
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                               color: nearExpiry
-                                  ? AppTheme.error.withOpacity(0.4)
-                                  : AppTheme.primary.withOpacity(0.2),
+                                  ? AppTheme.error.withValues(alpha: 0.4)
+                                  : AppTheme.primary.withValues(alpha: 0.2),
                               width: 2),
                         ),
                         child: QrImageView(
@@ -278,7 +278,7 @@ class _SessionDetailViewState extends State<SessionDetailView>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Expires in',
+                        const Text('Expires in',
                             style: TextStyle(
                                 fontSize: 12,
                                 color: AppTheme.textSecondary)),
@@ -309,10 +309,10 @@ class _SessionDetailViewState extends State<SessionDetailView>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppTheme.error.withOpacity(0.08),
+                          color: AppTheme.error.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                              color: AppTheme.error.withOpacity(0.3)),
+                              color: AppTheme.error.withValues(alpha: 0.3)),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
@@ -365,7 +365,7 @@ class _SessionDetailViewState extends State<SessionDetailView>
                         label: 'Checked In',
                         color: AppTheme.success,
                       ),
-                      _StatDivider(),
+                      const _StatDivider(),
                       _StatItem(
                         value: session.isOpen ? 'Open' : 'Closed',
                         label: 'Status',
@@ -503,8 +503,8 @@ class _AttendeeRow extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: source == 'offline'
-                  ? AppTheme.warning.withOpacity(0.1)
-                  : AppTheme.success.withOpacity(0.1),
+                  ? AppTheme.warning.withValues(alpha: 0.1)
+                  : AppTheme.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(

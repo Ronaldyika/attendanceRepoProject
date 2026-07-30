@@ -49,12 +49,12 @@ class AppTheme {
       ),
       textTheme: Typography.blackMountainView.apply(bodyColor: textPrimary, displayColor: textPrimary),
       scaffoldBackgroundColor: surface,
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: textPrimary),
-        titleTextStyle: const TextStyle(
+        iconTheme: IconThemeData(color: textPrimary),
+        titleTextStyle: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: textPrimary,

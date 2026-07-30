@@ -46,18 +46,18 @@ class QrUtils {
     int clockSkewTolerance = 300,
   }) {
     final parsed = parseQrPayload(raw);
-    if (parsed == null) return QrVerifyResult(ok: false, reason: 'invalid_format');
+    if (parsed == null) return const QrVerifyResult(ok: false, reason: 'invalid_format');
 
     final base = buildPayloadBase(parsed.sessionId, parsed.courseCode, parsed.expiryUnix);
     final expected = computeHmac(base, secret);
 
     if (expected != parsed.signature) {
-      return QrVerifyResult(ok: false, reason: 'invalid_hmac');
+      return const QrVerifyResult(ok: false, reason: 'invalid_hmac');
     }
 
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     if (now > parsed.expiryUnix + clockSkewTolerance) {
-      return QrVerifyResult(ok: false, reason: 'expired');
+      return const QrVerifyResult(ok: false, reason: 'expired');
     }
 
     return QrVerifyResult(ok: true, reason: 'ok', parsed: parsed);

@@ -171,9 +171,9 @@ class _ActionTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.06),
+          color: color.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
@@ -185,7 +185,7 @@ class _ActionTile extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     fontSize: 14)),
             const Spacer(),
-            Icon(Icons.chevron_right, color: color.withOpacity(0.5)),
+            Icon(Icons.chevron_right, color: color.withValues(alpha: 0.5)),
           ],
         ),
       ),

@@ -47,19 +47,19 @@ class AttendanceHistoryView extends StatelessWidget {
         ],
       ),
       body: records.isEmpty
-          ? Center(
+          ? const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.history, size: 72, color: AppTheme.textSecondary),
-                  const SizedBox(height: 16),
-                  const Text('No attendance records yet',
+                  Icon(Icons.history, size: 72, color: AppTheme.textSecondary),
+                  SizedBox(height: 16),
+                  Text('No attendance records yet',
                       style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.textPrimary)),
-                  const SizedBox(height: 8),
-                  const Text('Your scanned QR records will appear here',
+                  SizedBox(height: 8),
+                  Text('Your scanned QR records will appear here',
                       style: TextStyle(color: AppTheme.textSecondary)),
                 ],
               ),
@@ -161,7 +161,7 @@ class _RecordCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: record.pendingSync
-              ? AppTheme.warning.withOpacity(0.3)
+              ? AppTheme.warning.withValues(alpha: 0.3)
               : AppTheme.divider,
         ),
       ),
@@ -172,8 +172,8 @@ class _RecordCard extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: record.pendingSync
-                  ? AppTheme.warning.withOpacity(0.1)
-                  : AppTheme.success.withOpacity(0.1),
+                  ? AppTheme.warning.withValues(alpha: 0.1)
+                  : AppTheme.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(

@@ -37,22 +37,22 @@ class LecturerCoursesView extends StatelessWidget {
       body: ctrl.state == CourseState.loading
           ? const ShimmerListPlaceholder(itemCount: 5)
           : ctrl.courses.isEmpty
-              ? Center(
+              ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.menu_book_outlined,
+                      Icon(Icons.menu_book_outlined,
                           size: 72, color: AppTheme.textSecondary),
-                      const SizedBox(height: 16),
-                      const Text('No courses yet',
+                      SizedBox(height: 16),
+                      Text('No courses yet',
                           style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                               color: AppTheme.textPrimary)),
-                      const SizedBox(height: 8),
-                      const Text('Create your first course to get started',
+                      SizedBox(height: 8),
+                      Text('Create your first course to get started',
                           style: TextStyle(color: AppTheme.textSecondary)),
-                      const SizedBox(height: 100),
+                      SizedBox(height: 100),
                     ],
                   ),
                 )
@@ -115,7 +115,7 @@ class _CourseCard extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Center(
@@ -159,8 +159,8 @@ class _CourseCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: course.isActive
-                  ? AppTheme.success.withOpacity(0.1)
-                  : AppTheme.textSecondary.withOpacity(0.1),
+                  ? AppTheme.success.withValues(alpha: 0.1)
+                  : AppTheme.textSecondary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(

@@ -165,15 +165,17 @@ class AttendanceService {
         'records': pending.map((r) => r.toSyncPayload()).toList(),
       });
       final result = resp.data as Map<String, dynamic>;
-      // Mark all as synced
       final now = DateTime.now().toIso8601String();
-      for (final r in pending) {
-        await _db.update(
-          'attendance_records',
-          {'pending_sync': 0, 'synced_at': now},
-          where: 'id = ?',
-          whereArgs: [r.id],
-        );
+      final accepted = result['accepted'] ?? pending.length;
+      if (accepted is int && accepted > 0) {
+        for (final r in pending) {
+          await _db.update(
+            'attendance_records',
+            {'pending_sync': 0, 'synced_at': now},
+            where: 'id = ?',
+            whereArgs: [r.id],
+          );
+        }
       }
       return ApiResult.success(result);
     } catch (e) {
@@ -245,7 +247,7 @@ class AttendanceScanResult {
       AttendanceScanResult._(isSuccess: true, isDuplicate: false, record: record);
 
   factory AttendanceScanResult.duplicate() =>
-      AttendanceScanResult._(isSuccess: false, isDuplicate: true,
+      const AttendanceScanResult._(isSuccess: false, isDuplicate: true,
           errorMessage: 'You have already registered attendance for this session.');
 
   factory AttendanceScanResult.failure(String message) =>

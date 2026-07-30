@@ -149,7 +149,7 @@ class _LecturerDashboard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text('Manage your attendance sessions',
                       style: TextStyle(
-                          color: Colors.white.withOpacity(0.8), fontSize: 13)),
+                          color: Colors.white.withValues(alpha: 0.8), fontSize: 13)),
                 ],
               ),
             ),
@@ -165,6 +165,53 @@ class _LecturerDashboard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFFEEF6FF), Color(0xFFE8F0FE)],
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppTheme.primary.withValues(alpha: 0.18)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.qr_code_2, color: AppTheme.primary, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'QR sessions stay secure even offline',
+                            style: TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Signed codes, device-bound validation and automatic refresh keep the attendance flow robust during field sessions.',
+                            style: TextStyle(color: AppTheme.textSecondary, fontSize: 12.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // Stats grid
               GridView.count(
                 crossAxisCount: 2,
@@ -251,7 +298,7 @@ class _LecturerDashboard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               if (sessions.sessions.isEmpty)
-                _EmptyState(
+                const _EmptyState(
                   icon: Icons.qr_code_2_outlined,
                   message: 'No sessions yet.\nTap + to create one.',
                 )
@@ -283,16 +330,16 @@ class _QuickActionCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
+                color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: color, size: 20),
@@ -329,8 +376,8 @@ class _SessionTile extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: session.isOpen
-                  ? AppTheme.success.withOpacity(0.1)
-                  : AppTheme.textSecondary.withOpacity(0.1),
+                  ? AppTheme.success.withValues(alpha: 0.1)
+                  : AppTheme.textSecondary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -367,8 +414,8 @@ class _SessionTile extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: session.isOpen
-                      ? AppTheme.success.withOpacity(0.1)
-                      : AppTheme.textSecondary.withOpacity(0.1),
+                      ? AppTheme.success.withValues(alpha: 0.1)
+                      : AppTheme.textSecondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -402,7 +449,7 @@ class _EmptyState extends StatelessWidget {
         padding: const EdgeInsets.all(32),
         child: Column(
           children: [
-            Icon(icon, size: 56, color: AppTheme.textSecondary.withOpacity(0.4)),
+            Icon(icon, size: 56, color: AppTheme.textSecondary.withValues(alpha: 0.4)),
             const SizedBox(height: 12),
             Text(message,
                 textAlign: TextAlign.center,

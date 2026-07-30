@@ -89,12 +89,12 @@ class GradientButton extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: onPressed != null ? gradient : null,
-        color: onPressed == null ? AppTheme.textSecondary.withOpacity(0.3) : null,
+        color: onPressed == null ? AppTheme.textSecondary.withValues(alpha: 0.3) : null,
         borderRadius: BorderRadius.circular(12),
         boxShadow: onPressed != null
             ? [
                 BoxShadow(
-                  color: AppTheme.primary.withOpacity(0.3),
+                  color: AppTheme.primary.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 )

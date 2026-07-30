@@ -36,23 +36,23 @@ class SessionListView extends StatelessWidget {
       body: ctrl.state == SessionState.loading
           ? const Center(child: CircularProgressIndicator())
           : ctrl.sessions.isEmpty
-              ? Center(
+              ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.qr_code_2_outlined,
+                      Icon(Icons.qr_code_2_outlined,
                           size: 72, color: AppTheme.textSecondary),
-                      const SizedBox(height: 16),
-                      const Text('No sessions yet',
+                      SizedBox(height: 16),
+                      Text('No sessions yet',
                           style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                               color: AppTheme.textPrimary)),
-                      const SizedBox(height: 8),
-                      const Text('Create a new session to start\ntaking attendance',
+                      SizedBox(height: 8),
+                      Text('Create a new session to start\ntaking attendance',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: AppTheme.textSecondary)),
-                      const SizedBox(height: 100),
+                      SizedBox(height: 100),
                     ],
                   ),
                 )
@@ -96,14 +96,14 @@ class _SessionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: session.isOpen
-                ? AppTheme.success.withOpacity(0.3)
+                ? AppTheme.success.withValues(alpha: 0.3)
                 : AppTheme.divider,
             width: session.isOpen ? 1.5 : 1,
           ),
           boxShadow: session.isOpen
               ? [
                   BoxShadow(
-                    color: AppTheme.success.withOpacity(0.08),
+                    color: AppTheme.success.withValues(alpha: 0.08),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   )
@@ -185,7 +185,7 @@ class _CountdownBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final ctrl = context.watch<SessionController>();
     final remaining = ctrl.qrSecondsRemaining;
-    final total = AppConstants.qrValiditySeconds;
+    const total = AppConstants.qrValiditySeconds;
     final progress = remaining / total;
 
     final mm = (remaining ~/ 60).toString().padLeft(2, '0');

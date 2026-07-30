@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:uuid/uuid.dart';
 import '../core/network/api_client.dart';
@@ -55,16 +57,49 @@ class AuthService {
         return const ApiResult.failure('Unexpected login response from server.');
       }
 
-      await SecureStorageService.saveTokens(
+      await _persistSuccessfulLogin(
+        email: email,
+        password: password,
+        deviceUuid: deviceUuid,
+        user: UserModel.fromJson(asStringMap(userJson)!),
         access: data['access'].toString(),
         refresh: data['refresh'].toString(),
       );
-      final user = UserModel.fromJson(asStringMap(userJson)!);
-      await SecureStorageService.saveUserData(user.toJsonString());
       return ApiResult.success(data);
     } catch (e) {
       return ApiResult.failure(parseApiError(e, fallback: 'Invalid email or password.'));
     }
+  }
+
+  Future<ApiResult<Map<String, dynamic>>> loginOffline({
+    required String email,
+    required String password,
+    required String deviceUuid,
+  }) async {
+    final storedKey = await SecureStorageService.getOfflineLoginKey();
+    if (storedKey == null || storedKey.isEmpty) {
+      return const ApiResult.failure('Offline login is not available yet. Connect once to enable it.');
+    }
+
+    final expectedKey = _buildOfflineLoginKey(email, password, deviceUuid);
+    if (storedKey != expectedKey) {
+      return const ApiResult.failure('Offline login is not available for this account.');
+    }
+
+    final cachedUserJson = await SecureStorageService.getUserData();
+    if (cachedUserJson == null || cachedUserJson.isEmpty) {
+      return const ApiResult.failure('No cached account found for offline login.');
+    }
+
+    final user = UserModel.fromJsonString(cachedUserJson);
+    final cached = {
+      'user': user.toJson(),
+      'access': await SecureStorageService.getAccessToken(),
+      'refresh': await SecureStorageService.getRefreshToken(),
+      'offline': true,
+    };
+
+    return ApiResult.success(cached);
   }
 
   Future<ApiResult<UserModel>> register({
@@ -142,6 +177,27 @@ class AuthService {
       }
     } catch (_) {}
     await SecureStorageService.clearAll();
+  }
+
+  Future<void> _persistSuccessfulLogin({
+    required String email,
+    required String password,
+    required String deviceUuid,
+    required UserModel user,
+    required String access,
+    required String refresh,
+  }) async {
+    await SecureStorageService.saveTokens(access: access, refresh: refresh);
+    await SecureStorageService.saveUserData(user.toJsonString());
+    await SecureStorageService.saveOfflineLoginKey(
+      _buildOfflineLoginKey(email, password, deviceUuid),
+    );
+  }
+
+  String _buildOfflineLoginKey(String email, String password, String deviceUuid) {
+    final payload = '$email|$password|$deviceUuid';
+    final digest = sha256.convert(utf8.encode(payload));
+    return digest.toString();
   }
 
   Future<UserModel?> getCachedUser() async {

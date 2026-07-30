@@ -39,7 +39,7 @@ class StudentProfileView extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 36,
-                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
                     child: Text(
                       user?.firstName.safeInitial('S') ?? 'S',
                       style: const TextStyle(
@@ -56,17 +56,17 @@ class StudentProfileView extends StatelessWidget {
                           fontWeight: FontWeight.w700)),
                   Text(user?.email ?? '',
                       style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 13)),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                          color: Colors.white.withOpacity(0.3)),
+                          color: Colors.white.withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       user?.registrationNumber ?? 'No Reg. Number',
@@ -120,10 +120,10 @@ class StudentProfileView extends StatelessWidget {
               icon: Icons.fingerprint,
               label: 'Device UUID',
               value: auth.deviceUuid != null && auth.deviceUuid!.isNotEmpty
-                  ? '${auth.deviceUuid!.truncate(16, '...')}'
+                  ? auth.deviceUuid!.truncate(16, '...')
                   : 'Unavailable',
             ),
-            _InfoTile(
+            const _InfoTile(
               icon: Icons.shield_outlined,
               label: 'Fraud Protection',
               value: 'HMAC-SHA256 + Device Binding',
@@ -154,10 +154,10 @@ class StudentProfileView extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppTheme.warning.withOpacity(0.08),
+                    color: AppTheme.warning.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: AppTheme.warning.withOpacity(0.3)),
+                        color: AppTheme.warning.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
@@ -211,10 +211,10 @@ class StudentProfileView extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppTheme.error.withOpacity(0.06),
+                  color: AppTheme.error.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                      color: AppTheme.error.withOpacity(0.2)),
+                      color: AppTheme.error.withValues(alpha: 0.2)),
                 ),
                 child: const Row(
                   children: [
