@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
-import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_theme.dart';
 import '../shared/widgets/app_button.dart';
 import '../shared/widgets/app_text_field.dart';

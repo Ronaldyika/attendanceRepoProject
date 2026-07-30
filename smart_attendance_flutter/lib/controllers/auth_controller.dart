@@ -6,7 +6,9 @@ import '../services/auth_service.dart';
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
 class AuthController extends ChangeNotifier {
-  final _service = AuthService();
+  AuthController({AuthService? service}) : _service = service ?? AuthService();
+
+  final AuthService _service;
 
   AuthStatus _status = AuthStatus.initial;
   UserModel? _user;
@@ -20,23 +22,28 @@ class AuthController extends ChangeNotifier {
   bool get isAuthenticated => _status == AuthStatus.authenticated;
 
   Future<void> init() async {
-    _status = AuthStatus.loading;
-    notifyListeners();
-    _deviceUuid = await _service.getDeviceUuid();
-    final cached = await _service.getCachedUser();
-    if (cached != null) {
-      _user = cached;
-      _status = AuthStatus.authenticated;
-    } else {
+    _setLoading();
+
+    try {
+      _deviceUuid = await _service.getDeviceUuid();
+      final cached = await _service.getCachedUser();
+      if (cached != null) {
+        _user = cached;
+        await refreshProfile();
+        _status = AuthStatus.authenticated;
+      } else {
+        _status = AuthStatus.unauthenticated;
+      }
+    } catch (_) {
+      _error = 'Unable to restore your session right now.';
       _status = AuthStatus.unauthenticated;
+    } finally {
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   Future<bool> login(String email, String password) async {
-    _status = AuthStatus.loading;
-    _error = null;
-    notifyListeners();
+    _setLoading();
 
     _deviceUuid ??= await _service.getDeviceUuid();
     final result = await _service.login(
@@ -46,18 +53,29 @@ class AuthController extends ChangeNotifier {
     );
 
     if (result.isSuccess) {
-      final userData = result.data!['user'] as Map<String, dynamic>;
-      _user = UserModel.fromJson(userData);
+      final payload = result.data;
+      final userData = payload?['user'];
+      if (userData is! Map) {
+        _error = 'Unexpected login response from server.';
+        _user = null;
+        _status = AuthStatus.unauthenticated;
+        notifyListeners();
+        return false;
+      }
+
+      _user = UserModel.fromJson(userData.cast<String, dynamic>());
       await refreshProfile();
       _status = AuthStatus.authenticated;
+      _error = null;
       notifyListeners();
       return true;
-    } else {
-      _error = result.error;
-      _status = AuthStatus.unauthenticated;
-      notifyListeners();
-      return false;
     }
+
+    _error = result.error;
+    _user = null;
+    _status = AuthStatus.unauthenticated;
+    notifyListeners();
+    return false;
   }
 
   Future<bool> register({
@@ -69,9 +87,7 @@ class AuthController extends ChangeNotifier {
     required String password,
     required String passwordConfirm,
   }) async {
-    _status = AuthStatus.loading;
-    _error = null;
-    notifyListeners();
+    _setLoading();
 
     final result = await _service.register(
       email: email,
@@ -84,29 +100,35 @@ class AuthController extends ChangeNotifier {
     );
 
     if (result.isSuccess) {
+      _error = null;
       _status = AuthStatus.unauthenticated;
       notifyListeners();
       return true;
-    } else {
-      _error = result.error;
-      _status = AuthStatus.unauthenticated;
-      notifyListeners();
-      return false;
     }
+
+    _error = result.error;
+    _status = AuthStatus.unauthenticated;
+    notifyListeners();
+    return false;
   }
 
   Future<void> logout() async {
     await _service.logout();
     _user = null;
+    _error = null;
     _status = AuthStatus.unauthenticated;
     notifyListeners();
   }
 
   Future<void> refreshProfile() async {
-    final result = await _service.getProfile();
-    if (result.isSuccess) {
-      _user = result.data;
-      notifyListeners();
+    try {
+      final result = await _service.getProfile();
+      if (result.isSuccess && result.data != null) {
+        _user = result.data;
+        notifyListeners();
+      }
+    } catch (_) {
+      // Keep the cached user and let the UI continue gracefully.
     }
   }
 
@@ -117,6 +139,12 @@ class AuthController extends ChangeNotifier {
   }
 
   void clearError() {
+    _error = null;
+    notifyListeners();
+  }
+
+  void _setLoading() {
+    _status = AuthStatus.loading;
     _error = null;
     notifyListeners();
   }

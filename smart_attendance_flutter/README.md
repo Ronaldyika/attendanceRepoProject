@@ -126,8 +126,16 @@ flutter run -d emulator-5554    # specific emulator
 ### 5. Run unit tests
 
 ```bash
-flutter test test/qr_utils_test.dart
+flutter test
 ```
+
+### 6. Build for presentation/demo
+
+```bash
+flutter build apk --debug
+```
+
+This produces a debug APK suitable for live demonstration and validation during a thesis defense.
 
 ---
 

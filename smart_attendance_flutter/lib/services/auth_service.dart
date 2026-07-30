@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import '../core/network/api_client.dart';
 import '../core/network/api_result.dart';
@@ -47,12 +46,20 @@ class AuthService {
         'password': password,
         'device_uuid': deviceUuid,
       });
-      final data = resp.data as Map<String, dynamic>;
+      final data = asStringMap(resp.data);
+      if (data == null || data['access'] == null || data['refresh'] == null) {
+        return const ApiResult.failure('Unexpected login response from server.');
+      }
+      final userJson = data['user'];
+      if (userJson is! Map) {
+        return const ApiResult.failure('Unexpected login response from server.');
+      }
+
       await SecureStorageService.saveTokens(
-        access: data['access'],
-        refresh: data['refresh'],
+        access: data['access'].toString(),
+        refresh: data['refresh'].toString(),
       );
-      final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+      final user = UserModel.fromJson(asStringMap(userJson)!);
       await SecureStorageService.saveUserData(user.toJsonString());
       return ApiResult.success(data);
     } catch (e) {

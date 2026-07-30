@@ -10,9 +10,7 @@ class ApiClient {
   late final Dio _dio;
   // Must match SecureStorageService options (encryptedSharedPreferences),
   // otherwise tokens may be written to one store and read from another.
-  final _storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  final _storage = const FlutterSecureStorage();
 
   void init() {
     _dio = Dio(BaseOptions(
