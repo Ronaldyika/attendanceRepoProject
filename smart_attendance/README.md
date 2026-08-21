@@ -448,7 +448,7 @@ signature = hmac.new(
 ).hexdigest()
 ```
 
-The `session_secret` is generated server-side using `secrets.token_hex(64)` and **never transmitted to student devices**.
+The `session_secret` is returned to **lecturer devices** at session creation and to **enrolled student devices** when listing open sessions (required for offline HMAC verification). It is never exposed to unenrolled users.
 
 ---
 

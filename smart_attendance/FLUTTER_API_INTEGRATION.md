@@ -23,7 +23,7 @@ Use this document to wire your Flutter app to the backend. It lists every endpoi
 ```dart
 class ApiConfig {
   // Change per environment
-  static const String baseUrl = 'https://qrscanner-5qk4.onrendercom';
+  static const String baseUrl = 'https://qrscanner-5qk4.onrender.com';
   static const String apiV1 = '$baseUrl/api/v1';
   static const String authBase = '$apiV1/auth';
 

@@ -136,6 +136,31 @@ class SessionWithQRSerializer(serializers.ModelSerializer):
         return obj.course.code
 
 
+class StudentSessionCacheSerializer(SessionWithQRSerializer):
+    """
+    Enrolled students receive session_secret + QR metadata so the phone can
+    run all five offline validation checks (HMAC, expiry, device, duplicate).
+    """
+
+    course_title = serializers.SerializerMethodField()
+    lecturer_name = serializers.SerializerMethodField()
+    attendance_count = serializers.SerializerMethodField()
+
+    class Meta(SessionWithQRSerializer.Meta):
+        fields = SessionWithQRSerializer.Meta.fields + [
+            "course_title", "lecturer_name", "attendance_count", "created_by", "closed_at",
+        ]
+
+    def get_course_title(self, obj):
+        return obj.course.title
+
+    def get_lecturer_name(self, obj):
+        return obj.created_by.get_full_name()
+
+    def get_attendance_count(self, obj):
+        return obj.records.count()
+
+
 # ---------------------------------------------------------------------------
 # Attendance Record (single online scan)
 # ---------------------------------------------------------------------------

@@ -34,6 +34,7 @@ from .serializers import (
     SessionAttendanceReportSerializer,
     SessionCreateSerializer,
     SessionWithQRSerializer,
+    StudentSessionCacheSerializer,
     SyncBatchResponseSerializer,
     SyncBatchSerializer,
     CourseSerializer,
@@ -151,6 +152,8 @@ class SessionListCreateView(generics.ListCreateAPIView):
     def get_serializer_class(self):
         if self.request.method == "POST":
             return SessionCreateSerializer
+        if getattr(self.request.user, "is_student", False):
+            return StudentSessionCacheSerializer
         return AttendanceSessionSerializer
 
     def get_permissions(self):
@@ -178,9 +181,26 @@ class SessionListCreateView(generics.ListCreateAPIView):
 @extend_schema(tags=["Sessions"])
 class SessionDetailView(generics.RetrieveAPIView):
     """Retrieve a single attendance session with its attendance count."""
-    serializer_class = AttendanceSessionSerializer
+
     queryset = AttendanceSession.objects.select_related("course", "created_by")
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        user = self.request.user
+        if getattr(user, "is_student", False):
+            return StudentSessionCacheSerializer
+        if getattr(user, "is_lecturer", False):
+            return SessionWithQRSerializer
+        return AttendanceSessionSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = super().get_queryset()
+        if user.is_lecturer:
+            return qs.filter(created_by=user)
+        if user.is_student:
+            return qs.filter(course__enrolled_students=user)
+        return qs
 
 
 @extend_schema(
