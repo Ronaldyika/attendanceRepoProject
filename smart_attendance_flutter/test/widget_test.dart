@@ -16,9 +16,9 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Smart Attendance'), findsOneWidget);
+    expect(find.text('Civilsalt Attendance Manager'), findsOneWidget);
     expect(find.textContaining('Offline-Capable'), findsOneWidget);
-    expect(find.textContaining('NAHPI'), findsOneWidget);
+    expect(find.textContaining('Civilsalt Attendance Manager'), findsOneWidget);
 
     // Allow splash navigation timer to complete (skip pumpAndSettle — repeating animations)
     await tester.pump(const Duration(milliseconds: 2000));

@@ -6,7 +6,7 @@
 //
 // Author  : Buhnyuy Ronald Yika (UBa25EP188)
 // Degree  : Master of Engineering – Computer Engineering
-// School  : NAHPI, University of Bamenda, Cameroon
+// Company : Civilsalt, Cameroon
 // Year    : 2025
 // ============================================================
 
@@ -66,7 +66,7 @@ class SmartAttendanceApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AttendanceController()),
       ],
       child: MaterialApp(
-        title: 'Smart Attendance',
+        title: 'Civilsalt Attendance Manager',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         initialRoute: AppConstants.routeSplash,

@@ -107,7 +107,7 @@ class _SplashViewState extends State<SplashView>
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const Text('Smart Attendance',
+                      const Text('Civilsalt Attendance Manager',
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 28,
@@ -120,7 +120,7 @@ class _SplashViewState extends State<SplashView>
                               fontSize: 12,
                               letterSpacing: 0.3)),
                       const SizedBox(height: 8),
-                      Text('NAHPI · University of Bamenda',
+                      Text('Civilsalt · Attendance Crisis Solution',
                           style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.55),
                               fontSize: 11)),

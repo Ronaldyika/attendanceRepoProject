@@ -9,8 +9,8 @@ class AppConstants {
   // API
   static const String baseUrl = 'https://qrattendance-q6g0.onrender.com/api/v1';
   static const String authBase = '$baseUrl/auth';
-  static const Duration connectTimeout = Duration(seconds: 15);
-  static const Duration receiveTimeout = Duration(seconds: 30);
+  static const Duration connectTimeout = Duration(seconds: 30);
+  static const Duration receiveTimeout = Duration(seconds: 60);
 
   // QR
   /// QR validity/refresh interval (15-minute window per thesis spec).

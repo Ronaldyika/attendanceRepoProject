@@ -173,13 +173,13 @@ class _RegisterViewState extends State<RegisterView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Join Smart Attendance',
+                        Text('Join Civilsalt Attendance Manager',
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700)),
                         SizedBox(height: 4),
-                        Text('NAHPI · University of Bamenda',
+                        Text('Civilsalt · Attendance Crisis Solution',
                             style: TextStyle(
                                 color: Colors.white70, fontSize: 12)),
                       ],

@@ -40,10 +40,10 @@ void main() {
     final service = FakeOfflineAuthService()..shouldOfflineLogin = true;
     final controller = AuthController(service: service);
 
-    final ok = await controller.login('student@nahpi.cm', 'secret');
+    final ok = await controller.login('student@civilsalt.com', 'secret');
 
     expect(ok, isTrue);
     expect(controller.status, AuthStatus.authenticated);
-    expect(controller.user?.email, 'student@nahpi.cm');
+    expect(controller.user?.email, 'student@civilsalt.com');
   });
 }

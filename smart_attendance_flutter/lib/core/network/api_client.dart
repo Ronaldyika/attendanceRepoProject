@@ -7,18 +7,25 @@ class ApiClient {
   factory ApiClient() => _instance;
   ApiClient._internal();
 
-  late final Dio _dio;
+  late Dio _dio;
+  bool _initialized = false;
   // Must match SecureStorageService options (encryptedSharedPreferences),
   // otherwise tokens may be written to one store and read from another.
   final _storage = const FlutterSecureStorage();
 
   void init() {
+    if (_initialized) return;
+
     _dio = Dio(BaseOptions(
       baseUrl: AppConstants.baseUrl,
       connectTimeout: AppConstants.connectTimeout,
       receiveTimeout: AppConstants.receiveTimeout,
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
     ));
+    _initialized = true;
 
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
@@ -53,10 +60,13 @@ class ApiClient {
     try {
       final refresh = await _storage.read(key: AppConstants.kRefreshToken);
       if (refresh == null) return false;
-      final resp = await _dio.post('/auth/token/refresh/', data: {'refresh': refresh});
-      await _storage.write(key: AppConstants.kAccessToken, value: resp.data['access']);
+      final resp =
+          await _dio.post('/auth/token/refresh/', data: {'refresh': refresh});
+      await _storage.write(
+          key: AppConstants.kAccessToken, value: resp.data['access']);
       if (resp.data['refresh'] != null) {
-        await _storage.write(key: AppConstants.kRefreshToken, value: resp.data['refresh']);
+        await _storage.write(
+            key: AppConstants.kRefreshToken, value: resp.data['refresh']);
       }
       return true;
     } catch (_) {
@@ -65,13 +75,31 @@ class ApiClient {
   }
 
   Future<Response> get(String path, {Map<String, dynamic>? queryParams}) =>
-      _dio.get(path, queryParameters: queryParams);
+      _send(() => _dio.get(path, queryParameters: queryParams));
 
   Future<Response> post(String path, {dynamic data}) =>
-      _dio.post(path, data: data);
+      _send(() => _dio.post(path, data: data));
 
   Future<Response> patch(String path, {dynamic data}) =>
-      _dio.patch(path, data: data);
+      _send(() => _dio.patch(path, data: data));
 
-  Future<Response> delete(String path) => _dio.delete(path);
+  Future<Response> delete(String path) => _send(() => _dio.delete(path));
+
+  Future<Response> _send(Future<Response> Function() request) async {
+    if (!_initialized) init();
+
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await request();
+      } on DioException catch (error) {
+        final transient = error.response == null &&
+            (error.type == DioExceptionType.connectionError ||
+                error.type == DioExceptionType.connectionTimeout);
+        if (!transient || attempt == 1) rethrow;
+        await Future<void>.delayed(const Duration(seconds: 1));
+      }
+    }
+
+    throw StateError('API request did not complete.');
+  }
 }

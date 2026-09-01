@@ -50,11 +50,13 @@ class AuthService {
       });
       final data = asStringMap(resp.data);
       if (data == null || data['access'] == null || data['refresh'] == null) {
-        return const ApiResult.failure('Unexpected login response from server.');
+        return const ApiResult.failure(
+            'Unexpected login response from server.');
       }
       final userJson = data['user'];
       if (userJson is! Map) {
-        return const ApiResult.failure('Unexpected login response from server.');
+        return const ApiResult.failure(
+            'Unexpected login response from server.');
       }
 
       await _persistSuccessfulLogin(
@@ -67,7 +69,8 @@ class AuthService {
       );
       return ApiResult.success(data);
     } catch (e) {
-      return ApiResult.failure(parseApiError(e, fallback: 'Invalid email or password.'));
+      return ApiResult.failure(
+          parseApiError(e, fallback: 'Invalid email or password.'));
     }
   }
 
@@ -78,17 +81,20 @@ class AuthService {
   }) async {
     final storedKey = await SecureStorageService.getOfflineLoginKey();
     if (storedKey == null || storedKey.isEmpty) {
-      return const ApiResult.failure('Offline login is not available yet. Connect once to enable it.');
+      return const ApiResult.failure(
+          'Offline login is not available yet. Connect once to enable it.');
     }
 
     final expectedKey = _buildOfflineLoginKey(email, password, deviceUuid);
     if (storedKey != expectedKey) {
-      return const ApiResult.failure('Offline login is not available for this account.');
+      return const ApiResult.failure(
+          'Offline login is not available for this account.');
     }
 
     final cachedUserJson = await SecureStorageService.getUserData();
     if (cachedUserJson == null || cachedUserJson.isEmpty) {
-      return const ApiResult.failure('No cached account found for offline login.');
+      return const ApiResult.failure(
+          'No cached account found for offline login.');
     }
 
     final user = UserModel.fromJsonString(cachedUserJson);
@@ -111,16 +117,18 @@ class AuthService {
     required String password,
     required String passwordConfirm,
   }) async {
+    final payload = {
+      'email': email.trim().toLowerCase(),
+      'first_name': firstName.trim(),
+      'last_name': lastName.trim(),
+      'registration_number': registrationNumber.trim(),
+      'role': role,
+      'password': password,
+      'password_confirm': passwordConfirm,
+    };
+
     try {
-      final resp = await _api.post('/auth/register/', data: {
-        'email': email.trim().toLowerCase(),
-        'first_name': firstName,
-        'last_name': lastName,
-        'registration_number': registrationNumber,
-        'role': role,
-        'password': password,
-        'password_confirm': passwordConfirm,
-      });
+      final resp = await _api.post('/auth/register/', data: payload);
       final data = asStringMap(resp.data);
       final userJson = data?['user'];
       if (userJson is! Map) {
@@ -149,7 +157,8 @@ class AuthService {
   /// Students for enrolment — use `id` (UUID), not registration numbers.
   Future<ApiResult<List<UserModel>>> getStudents() async {
     try {
-      final resp = await _api.get('/auth/users/', queryParams: {'role': 'student'});
+      final resp =
+          await _api.get('/auth/users/', queryParams: {'role': 'student'});
       final list = extractPaginatedList(resp.data)
           .map((e) => UserModel.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -165,7 +174,8 @@ class AuthService {
       final map = asStringMap(resp.data) ?? {};
       return ApiResult.success(map);
     } catch (e) {
-      return ApiResult.failure(parseApiError(e, fallback: 'Server unreachable.'));
+      return ApiResult.failure(
+          parseApiError(e, fallback: 'Server unreachable.'));
     }
   }
 
@@ -194,7 +204,8 @@ class AuthService {
     );
   }
 
-  String _buildOfflineLoginKey(String email, String password, String deviceUuid) {
+  String _buildOfflineLoginKey(
+      String email, String password, String deviceUuid) {
     final payload = '$email|$password|$deviceUuid';
     final digest = sha256.convert(utf8.encode(payload));
     return digest.toString();

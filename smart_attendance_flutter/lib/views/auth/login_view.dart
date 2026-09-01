@@ -103,13 +103,13 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                               color: Colors.white, size: 40),
                         ),
                         const SizedBox(height: 16),
-                        const Text('Smart Attendance',
+                        const Text('Civilsalt Attendance Manager',
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 26,
                                 fontWeight: FontWeight.w700)),
                         const SizedBox(height: 4),
-                        Text('NAHPI · University of Bamenda',
+                        Text('Civilsalt · Attendance Crisis Solution',
                             style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.8),
                                 fontSize: 13)),
@@ -153,7 +153,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                               const SizedBox(height: 24),
                               AppTextField(
                                 label: 'Email Address',
-                                hint: 'student@nahpi.cm',
+                                hint: 'student@civilsalt.com',
                                 controller: _emailCtrl,
                                 keyboardType: TextInputType.emailAddress,
                                 prefixIcon: const Icon(Icons.email_outlined),

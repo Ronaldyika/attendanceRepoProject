@@ -1,8 +1,8 @@
 name: smart_attendance
 description: >
-  Offline-Capable Smart Attendance System using QR Codes and Secure
-  Synchronisation. Master of Engineering – Computer Engineering,
-  NAHPI, University of Bamenda. Author: Buhnyuy Ronald Yika (UBa25EP188).
+  Offline-Capable Civilsalt attendance system using QR codes and secure
+  synchronisation to solve attendance crisis in the company. Author:
+  Buhnyuy Ronald Yika (UBa25EP188).
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -33,7 +33,7 @@ dependencies:
   mobile_scanner: ^7.2.0
 
   # Device info (UUID binding)
-  device_info_plus: ^13.1.0
+  device_info_plus: ^13.2.0
 
   # Network connectivity monitoring
   connectivity_plus: ^6.0.3
@@ -43,7 +43,7 @@ dependencies:
 
   # Shared preferences
   shared_preferences: ^2.2.3
-  shared_preferences_android: ^2.4.26
+  shared_preferences_android: ^2.4.27
 
   # UI / fonts
   shimmer: ^3.0.0

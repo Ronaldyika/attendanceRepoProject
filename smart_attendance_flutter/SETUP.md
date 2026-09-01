@@ -1,4 +1,4 @@
-# Smart Attendance Flutter App – Setup Guide
+# Civilsalt Attendance Flutter App – Setup Guide
 
 ## Step 1: Prerequisites
 
@@ -105,4 +105,4 @@ flutter build apk --release
 
 ---
 
-*Smart Attendance · UBa25EP188 · NAHPI, University of Bamenda · 2025*
+*Civilsalt Attendance · UBa25EP188 · Attendance Crisis Solution · 2025*

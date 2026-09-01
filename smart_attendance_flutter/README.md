@@ -1,9 +1,9 @@
-# Smart Attendance – Flutter Mobile Application
+# Civilsalt Attendance – Flutter Mobile Application
 
 **Design and Implementation of an Offline-Capable Smart Attendance System Using QR Codes and Secure Synchronisation**
 
 > Master of Engineering – Computer Engineering  
-> National Higher Polytechnic Institute (NAHPI), University of Bamenda  
+> Civilsalt · Attendance Crisis Solution  
 > **Author:** Buhnyuy Ronald Yika · Registration No. UBa25EP188  
 > **Supervisor:** Dr. M. Nsangou Mouchili  
 > **Field Supervisor:** Engr. N Titus
@@ -219,4 +219,4 @@ flutter build appbundle --release
 
 ---
 
-*Smart Attendance – Flutter v1.0 · UBa25EP188 · NAHPI, University of Bamenda · 2025*
+*Civilsalt Attendance – Flutter v1.0 · UBa25EP188 · Attendance Crisis Solution · 2025*
