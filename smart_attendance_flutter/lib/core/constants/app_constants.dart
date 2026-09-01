@@ -45,4 +45,5 @@ class AppConstants {
   static const String routeProfile = '/profile';
   static const String routeCourses = '/courses';
   static const String routeReports = '/reports';
+  static const String routeManagementDashboard = '/management/dashboard';
 }

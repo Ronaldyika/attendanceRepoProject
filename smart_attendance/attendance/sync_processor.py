@@ -87,7 +87,9 @@ def process_sync_batch(user, device_uuid: str, records: list, batch: SyncBatch) 
             continue
 
         # ── 2. Device UUID match ──────────────────────────────────────────
-        if user.device_uuid and user.device_uuid != item_device_uuid:
+        normalized_registered = (user.device_uuid or "").strip().casefold()
+        normalized_submitted = (item_device_uuid or "").strip().casefold()
+        if user.device_uuid and normalized_registered != normalized_submitted:
             il = _log_integrity(
                 IntegrityLog.ViolationType.DEVICE_MISMATCH,
                 (
@@ -102,7 +104,7 @@ def process_sync_batch(user, device_uuid: str, records: list, batch: SyncBatch) 
         # ── 3. Cross-device conflict (same student+session, different device) ──
         existing_other_device = AttendanceRecord.objects.filter(
             student=user, session=session
-        ).exclude(device_uuid=item_device_uuid).first()
+        ).exclude(device_uuid__iexact=item_device_uuid).first()
 
         if existing_other_device:
             cl = ConflictLog.objects.create(

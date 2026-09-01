@@ -18,6 +18,7 @@ import 'controllers/attendance_controller.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/course_controller.dart';
 import 'controllers/session_controller.dart';
+import 'controllers/theme_controller.dart';
 import 'core/constants/app_constants.dart';
 import 'core/constants/app_theme.dart';
 import 'core/network/api_client.dart';
@@ -28,6 +29,7 @@ import 'views/auth/splash_view.dart';
 import 'views/lecturer/create_session_view.dart';
 import 'views/lecturer/lecturer_home_view.dart';
 import 'views/lecturer/reports_view.dart';
+import 'views/management/management_dashboard_view.dart';
 import 'views/shared/animations/fade_slide_route.dart';
 import 'views/student/student_home_view.dart';
 
@@ -64,29 +66,39 @@ class SmartAttendanceApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SessionController()),
         ChangeNotifierProvider(create: (_) => CourseController()),
         ChangeNotifierProvider(create: (_) => AttendanceController()),
+        ChangeNotifierProvider(create: (_) => ThemeController()),
       ],
-      child: MaterialApp(
-        title: 'Civilsalt Attendance Manager',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        initialRoute: AppConstants.routeSplash,
-        onGenerateRoute: (settings) {
-          switch (settings.name) {
-            case AppConstants.routeCreateSession:
-              return FadeSlideRoute(page: const CreateSessionView());
-            case AppConstants.routeReports:
-              return FadeSlideRoute(page: const ReportsView());
-            default:
-              return null;
-          }
-        },
-        routes: {
-          AppConstants.routeSplash: (_) => const SplashView(),
-          AppConstants.routeLogin: (_) => const LoginView(),
-          AppConstants.routeRegister: (_) => const RegisterView(),
-          AppConstants.routeLecturerHome: (_) => const LecturerHomeView(),
-          AppConstants.routeStudentHome: (_) => const StudentHomeView(),
-          AppConstants.routeCreateSession: (_) => const CreateSessionView(),
+      child: Consumer<ThemeController>(
+        builder: (context, themeController, _) {
+          return MaterialApp(
+            title: 'Civilsalt Attendance Manager',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeController.mode,
+            initialRoute: AppConstants.routeSplash,
+            onGenerateRoute: (settings) {
+              switch (settings.name) {
+                case AppConstants.routeCreateSession:
+                  return FadeSlideRoute(page: const CreateSessionView());
+                case AppConstants.routeReports:
+                  return FadeSlideRoute(page: const ReportsView());
+                case AppConstants.routeManagementDashboard:
+                  return FadeSlideRoute(page: const ManagementDashboardView());
+                default:
+                  return null;
+              }
+            },
+            routes: {
+              AppConstants.routeSplash: (_) => const SplashView(),
+              AppConstants.routeLogin: (_) => const LoginView(),
+              AppConstants.routeRegister: (_) => const RegisterView(),
+              AppConstants.routeLecturerHome: (_) => const LecturerHomeView(),
+              AppConstants.routeStudentHome: (_) => const StudentHomeView(),
+              AppConstants.routeCreateSession: (_) => const CreateSessionView(),
+              AppConstants.routeManagementDashboard: (_) => const ManagementDashboardView(),
+            },
+          );
         },
       ),
     );

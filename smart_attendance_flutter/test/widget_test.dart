@@ -17,7 +17,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Civilsalt Attendance Manager'), findsOneWidget);
-    expect(find.textContaining('Offline-Capable'), findsOneWidget);
+    expect(find.textContaining('Secure access • Offline sync • Live reporting'), findsOneWidget);
     expect(find.textContaining('Civilsalt Attendance Manager'), findsOneWidget);
 
     // Allow splash navigation timer to complete (skip pumpAndSettle — repeating animations)

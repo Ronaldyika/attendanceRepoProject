@@ -91,28 +91,48 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                     child: Column(
                       children: [
                         Container(
-                          width: 80,
-                          height: 80,
+                          width: 86,
+                          height: 86,
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                             border: Border.all(
                                 color: Colors.white.withValues(alpha: 0.3), width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                blurRadius: 24,
+                                spreadRadius: 2,
+                              ),
+                            ],
                           ),
                           child: const Icon(Icons.qr_code_scanner,
-                              color: Colors.white, size: 40),
+                              color: Colors.white, size: 42),
                         ),
                         const SizedBox(height: 16),
                         const Text('Civilsalt Attendance Manager',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 26,
                                 fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 4),
-                        Text('Civilsalt · Attendance Crisis Solution',
+                        const SizedBox(height: 6),
+                        Text('Workforce attendance with secure QR validation and live monitoring',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.8),
                                 fontSize: 13)),
+                        const SizedBox(height: 14),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: const [
+                            _BrandChip(label: 'QR Security'),
+                            _BrandChip(label: 'Offline Sync'),
+                            _BrandChip(label: 'Management Reports'),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -146,7 +166,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                       fontWeight: FontWeight.w700,
                                       color: AppTheme.textPrimary)),
                               const SizedBox(height: 4),
-                              const Text('Sign in to continue',
+                              const Text('Access the Civilsalt attendance command center',
                                   style: TextStyle(
                                       fontSize: 14,
                                       color: AppTheme.textSecondary)),
@@ -219,6 +239,36 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BrandChip extends StatelessWidget {
+  final String label;
+
+  const _BrandChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
+        ),
       ),
     );
   }

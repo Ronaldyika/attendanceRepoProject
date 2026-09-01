@@ -10,6 +10,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import DeviceBindingLog, User
 
 
+def normalize_device_uuid(value):
+    return (value or "").strip()
+
+
+def device_uuid_matches(left, right):
+    return normalize_device_uuid(left).lower() == normalize_device_uuid(right).lower()
+
+
 # ---------------------------------------------------------------------------
 # JWT customisation – embed user metadata in the token payload
 # ---------------------------------------------------------------------------
@@ -57,15 +65,15 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         """
         Validate credentials, handle device binding, and return complete auth response.
         """
-        device_uuid = attrs.pop("device_uuid", "").strip()
-        
+        device_uuid = normalize_device_uuid(attrs.pop("device_uuid", ""))
+
         # Get tokens and base response from parent class
         data = super().validate(attrs)
         user = self.user
 
         # Device binding logic
         if device_uuid:
-            if user.device_uuid and user.device_uuid != device_uuid:
+            if user.device_uuid and not device_uuid_matches(user.device_uuid, device_uuid):
                 raise serializers.ValidationError(
                     {
                         "device_uuid": (

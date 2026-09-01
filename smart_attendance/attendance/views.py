@@ -329,11 +329,11 @@ class SyncBatchView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        device_uuid = data["device_uuid"]
+        device_uuid = (data["device_uuid"] or "").strip()
         records = data["records"]
 
         # Device UUID consistency check
-        if request.user.device_uuid and request.user.device_uuid != device_uuid:
+        if request.user.device_uuid and request.user.device_uuid.strip().casefold() != device_uuid.casefold():
             return Response(
                 {"detail": "Sync device_uuid does not match registered device."},
                 status=status.HTTP_403_FORBIDDEN,

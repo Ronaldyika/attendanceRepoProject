@@ -48,6 +48,7 @@ dependencies:
   # UI / fonts
   shimmer: ^3.0.0
   gap: ^3.0.1
+  fl_chart: ^0.68.0
 
   # Date formatting
   intl: ^0.19.0
@@ -62,9 +63,30 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.6
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
     - assets/icons/
+    - assets/branding/
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/branding/civilsalt_app_icon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#0F172A"
+  adaptive_icon_foreground: "assets/branding/civilsalt_app_icon.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#0F172A"
+  image: assets/branding/civilsalt_splash.png
+  android: true
+  ios: true
+  android_gravity: center
+  ios_content_mode: center
+  fullscreen: true

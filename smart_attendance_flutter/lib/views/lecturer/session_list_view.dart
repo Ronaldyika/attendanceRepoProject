@@ -9,12 +9,49 @@ import '../shared/widgets/status_badge.dart';
 import '../shared/widgets/staggered_fade_in.dart';
 import 'session_detail_view.dart';
 
-class SessionListView extends StatelessWidget {
+class SessionListView extends StatefulWidget {
   const SessionListView({super.key});
+
+  @override
+  State<SessionListView> createState() => _SessionListViewState();
+}
+
+class _SessionListViewState extends State<SessionListView> {
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _filter = 'all';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<SessionModel> _filteredSessions(SessionController ctrl) {
+    final query = _searchCtrl.text.trim().toLowerCase();
+
+    final filtered = ctrl.sessions.where((session) {
+      final matchesFilter = switch (_filter) {
+        'open' => session.isOpen,
+        'closed' => !session.isOpen,
+        _ => true,
+      };
+      if (!matchesFilter) return false;
+
+      if (query.isEmpty) return true;
+
+      final searchable = '${session.courseCode} ${session.courseTitle} ${session.venue ?? ''}'
+          .toLowerCase();
+      return searchable.contains(query);
+    }).toList();
+
+    filtered.sort((a, b) => b.startedAt.compareTo(a.startedAt));
+    return filtered;
+  }
 
   @override
   Widget build(BuildContext context) {
     final ctrl = context.watch<SessionController>();
+    final filteredSessions = _filteredSessions(ctrl);
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
@@ -35,47 +72,140 @@ class SessionListView extends StatelessWidget {
       ),
       body: ctrl.state == SessionState.loading
           ? const Center(child: CircularProgressIndicator())
-          : ctrl.sessions.isEmpty
-              ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.qr_code_2_outlined,
-                          size: 72, color: AppTheme.textSecondary),
-                      SizedBox(height: 16),
-                      Text('No sessions yet',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary)),
-                      SizedBox(height: 8),
-                      Text('Create a new session to start\ntaking attendance',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: AppTheme.textSecondary)),
-                      SizedBox(height: 100),
+          : Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.divider),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
                     ],
                   ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-                  itemCount: ctrl.sessions.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) {
-                    final session = ctrl.sessions[i];
-                    return StaggeredFadeIn(
-                      index: i,
-                      child: _SessionCard(
-                      session: session,
-                      onTap: () {
-                        ctrl.setActiveSession(session);
-                        Navigator.push(context, FadeSlideRoute(
-                          page: SessionDetailView(session: session),
-                        ));
-                      },
-                    ),
-                    );
-                  },
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _searchCtrl,
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.search, color: AppTheme.textSecondary),
+                          hintText: 'Search by course, venue, or code',
+                          filled: true,
+                          fillColor: AppTheme.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 38,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            _FilterChip(label: 'All', selected: _filter == 'all', onTap: () => setState(() => _filter = 'all')),
+                            const SizedBox(width: 8),
+                            _FilterChip(label: 'Open', selected: _filter == 'open', onTap: () => setState(() => _filter = 'open')),
+                            const SizedBox(width: 8),
+                            _FilterChip(label: 'Closed', selected: _filter == 'closed', onTap: () => setState(() => _filter = 'closed')),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                Expanded(
+                  child: filteredSessions.isEmpty
+                      ? const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.qr_code_2_outlined,
+                                  size: 72, color: AppTheme.textSecondary),
+                              SizedBox(height: 16),
+                              Text('No matching sessions',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.textPrimary)),
+                              SizedBox(height: 8),
+                              Text('Try another search or create a new session',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: AppTheme.textSecondary)),
+                              SizedBox(height: 100),
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                          itemCount: filteredSessions.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          itemBuilder: (context, i) {
+                            final session = filteredSessions[i];
+                            return StaggeredFadeIn(
+                              index: i,
+                              child: _SessionCard(
+                                session: session,
+                                onTap: () {
+                                  ctrl.setActiveSession(session);
+                                  Navigator.push(context, FadeSlideRoute(
+                                    page: SessionDetailView(session: session),
+                                  ));
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.primary : AppTheme.surface,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? AppTheme.primary : AppTheme.divider,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : AppTheme.textPrimary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }

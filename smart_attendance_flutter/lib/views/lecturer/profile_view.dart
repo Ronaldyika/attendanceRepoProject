@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
+import '../../controllers/theme_controller.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_theme.dart';
 import '../../core/utils/string_utils.dart';
@@ -71,6 +72,9 @@ class LecturerProfileView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+
+            _ThemeToggleTile(),
+            const SizedBox(height: 8),
 
             // Info
             _InfoTile(
@@ -146,6 +150,45 @@ class _InfoTile extends StatelessWidget {
                         color: valueColor ?? AppTheme.textPrimary)),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ThemeToggleTile extends StatelessWidget {
+  const _ThemeToggleTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final themeController = context.watch<ThemeController>();
+    final isDark = themeController.mode == ThemeMode.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.divider),
+      ),
+      child: Row(
+        children: [
+          Icon(isDark ? Icons.dark_mode : Icons.light_mode, color: AppTheme.primary, size: 20),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Theme', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                Text('Dark mode', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+              ],
+            ),
+          ),
+          Switch(
+            value: isDark,
+            onChanged: (_) => context.read<ThemeController>().toggleDarkMode(),
+            activeColor: AppTheme.primary,
           ),
         ],
       ),

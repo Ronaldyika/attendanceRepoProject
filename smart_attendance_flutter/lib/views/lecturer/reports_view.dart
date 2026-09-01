@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/course_controller.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_theme.dart';
 import '../../models/course_model.dart';
 import '../../services/course_service.dart';
+import '../management/management_dashboard_view.dart';
 import '../shared/animations/fade_slide_route.dart';
 import '../shared/widgets/staggered_fade_in.dart';
+import 'analytics_dashboard_view.dart';
 
 class ReportsView extends StatelessWidget {
   const ReportsView({super.key});
@@ -16,7 +19,33 @@ class ReportsView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(title: const Text('Attendance Reports')),
+      appBar: AppBar(title: const Text('3. Live Reports')),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'analytics',
+            onPressed: () => Navigator.push(
+              context,
+              FadeSlideRoute(page: const AnalyticsDashboardView()),
+            ),
+            backgroundColor: AppTheme.primary,
+            icon: const Icon(Icons.insights_outlined, color: Colors.white),
+            label: const Text('Analytics', style: TextStyle(color: Colors.white)),
+          ),
+          const SizedBox(height: 10),
+          FloatingActionButton.extended(
+            heroTag: 'management',
+            onPressed: () => Navigator.pushNamed(
+              context,
+              AppConstants.routeManagementDashboard,
+            ),
+            backgroundColor: AppTheme.accent,
+            icon: const Icon(Icons.dashboard_customize_outlined, color: Colors.white),
+            label: const Text('Management', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
       body: courses.isEmpty
           ? const Center(
               child: Text('Create a course first to view reports.',

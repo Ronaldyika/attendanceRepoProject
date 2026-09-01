@@ -110,13 +110,17 @@ class SessionWithQRSerializer(serializers.ModelSerializer):
     qr_payload = serializers.SerializerMethodField()
     expiry_unix = serializers.SerializerMethodField()
     course_code = serializers.SerializerMethodField()
+    course_title = serializers.SerializerMethodField()
+    lecturer_name = serializers.SerializerMethodField()
+    attendance_count = serializers.SerializerMethodField()
 
     class Meta:
         model = AttendanceSession
         fields = [
-            "id", "course", "course_code", "status",
-            "started_at", "expires_at", "expiry_unix",
+            "id", "course", "course_code", "course_title",
+            "status", "started_at", "expires_at", "expiry_unix",
             "venue", "notes", "session_secret", "qr_payload",
+            "lecturer_name", "attendance_count", "created_by", "closed_at",
         ]
 
     def get_qr_payload(self, obj):
@@ -135,22 +139,6 @@ class SessionWithQRSerializer(serializers.ModelSerializer):
     def get_course_code(self, obj):
         return obj.course.code
 
-
-class StudentSessionCacheSerializer(SessionWithQRSerializer):
-    """
-    Enrolled students receive session_secret + QR metadata so the phone can
-    run all five offline validation checks (HMAC, expiry, device, duplicate).
-    """
-
-    course_title = serializers.SerializerMethodField()
-    lecturer_name = serializers.SerializerMethodField()
-    attendance_count = serializers.SerializerMethodField()
-
-    class Meta(SessionWithQRSerializer.Meta):
-        fields = SessionWithQRSerializer.Meta.fields + [
-            "course_title", "lecturer_name", "attendance_count", "created_by", "closed_at",
-        ]
-
     def get_course_title(self, obj):
         return obj.course.title
 
@@ -161,19 +149,32 @@ class StudentSessionCacheSerializer(SessionWithQRSerializer):
         return obj.records.count()
 
 
+class StudentSessionCacheSerializer(SessionWithQRSerializer):
+    """
+    Enrolled students receive session_secret + QR metadata so the phone can
+    run all five offline validation checks (HMAC, expiry, device, duplicate).
+    """
+
+    class Meta(SessionWithQRSerializer.Meta):
+        fields = SessionWithQRSerializer.Meta.fields
+
+
 # ---------------------------------------------------------------------------
 # Attendance Record (single online scan)
 # ---------------------------------------------------------------------------
 class AttendanceRecordSerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField(read_only=True)
     session_info = serializers.SerializerMethodField(read_only=True)
+    session_id = serializers.SerializerMethodField(read_only=True)
+    hmac_signature = serializers.SerializerMethodField(read_only=True)
+    qr_payload = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = AttendanceRecord
         fields = [
-            "id", "student", "student_name", "session", "session_info",
+            "id", "student", "student_name", "session", "session_id", "session_info",
             "device_uuid", "scan_source", "scanned_at", "synced_at",
-            "idempotency_key", "pending_sync",
+            "idempotency_key", "pending_sync", "hmac_signature", "qr_payload",
         ]
         read_only_fields = [
             "id", "synced_at", "idempotency_key", "pending_sync",
@@ -182,8 +183,17 @@ class AttendanceRecordSerializer(serializers.ModelSerializer):
     def get_student_name(self, obj):
         return obj.student.get_full_name()
 
+    def get_session_id(self, obj):
+        return str(obj.session_id)
+
     def get_session_info(self, obj):
         return {"id": str(obj.session.id), "course": obj.session.course.code}
+
+    def get_hmac_signature(self, obj):
+        return obj.hmac_signature or ""
+
+    def get_qr_payload(self, obj):
+        return obj.qr_payload if hasattr(obj, "qr_payload") else ""
 
 
 class OnlineScanSerializer(serializers.Serializer):
@@ -203,8 +213,10 @@ class OnlineScanSerializer(serializers.Serializer):
         if not student.is_student:
             raise serializers.ValidationError("Only students can record attendance.")
 
-        # Device binding check
-        if student.device_uuid and student.device_uuid != attrs["device_uuid"]:
+        attrs["device_uuid"] = (attrs["device_uuid"] or "").strip()
+
+        # Device binding check: same hardware ID, comparison must be case-insensitive.
+        if student.device_uuid and student.device_uuid.strip().casefold() != attrs["device_uuid"].casefold():
             raise serializers.ValidationError(
                 {"device_uuid": "Device UUID does not match the registered device for this account."}
             )
@@ -228,7 +240,7 @@ class OnlineScanSerializer(serializers.Serializer):
 
         # Duplicate check
         if AttendanceRecord.objects.filter(
-            student=student, session=session, device_uuid=attrs["device_uuid"]
+            student=student, session=session, device_uuid__iexact=attrs["device_uuid"]
         ).exists():
             raise serializers.ValidationError("Attendance already recorded for this session.")
 
@@ -240,7 +252,7 @@ class OnlineScanSerializer(serializers.Serializer):
         import time as time_mod
         student = validated_data["student"]
         session = validated_data["session"]
-        device_uuid = validated_data["device_uuid"]
+        device_uuid = validated_data["device_uuid"].strip()
         scanned_at = validated_data["scanned_at"]
 
         idempotency_key = (
