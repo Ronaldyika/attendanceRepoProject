@@ -1,6 +1,8 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_attendance/controllers/auth_controller.dart';
 import 'package:smart_attendance/core/network/api_result.dart';
+import 'package:smart_attendance/core/network/api_response_utils.dart';
 import 'package:smart_attendance/models/user_model.dart';
 import 'package:smart_attendance/services/auth_service.dart';
 
@@ -107,6 +109,46 @@ void main() {
       expect(controller.status, AuthStatus.unauthenticated);
       expect(controller.error, 'Invalid credentials');
       expect(controller.user, isNull);
+    });
+
+    test('explains certificate failures without falsely blaming the internet', () {
+      final err = DioException(
+        requestOptions: RequestOptions(path: '/auth/register/'),
+        type: DioExceptionType.badCertificate,
+        message: 'CERTIFICATE_VERIFY_FAILED: certificate has expired',
+      );
+
+      expect(
+        parseApiError(err),
+        contains('certificate'),
+      );
+      expect(parseApiError(err), isNot(contains('Check your internet connection')));
+    });
+
+    test('does not mislabel a server-connection issue as no internet', () {
+      final err = DioException(
+        requestOptions: RequestOptions(path: '/auth/login/'),
+        type: DioExceptionType.connectionError,
+        message: 'Connection closed before full header was received',
+      );
+
+      final text = parseApiError(err);
+      expect(text, contains('server'));
+      expect(text, isNot(contains('Check your internet connection')));
+      expect(text, isNot(contains('No internet')));
+    });
+
+    test('describes timeouts without blaming the internet when the backend is slow', () {
+      final err = DioException(
+        requestOptions: RequestOptions(path: '/auth/logout/'),
+        type: DioExceptionType.connectionTimeout,
+        message: 'Connection timeout',
+      );
+
+      final text = parseApiError(err);
+      expect(text, contains('timed out'));
+      expect(text, isNot(contains('Check your internet connection')));
+      expect(text, isNot(contains('No internet')));
     });
 
     test('marks registration successful when the service accepts the account',

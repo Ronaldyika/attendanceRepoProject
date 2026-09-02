@@ -26,6 +26,8 @@ String parseApiError(
   if (e is DioException) {
     final status = e.response?.statusCode;
     final body = e.response?.data;
+    final message = e.message ?? '';
+    final messageLower = message.toLowerCase();
 
     final map = asStringMap(body);
     if (map != null) {
@@ -48,19 +50,57 @@ String parseApiError(
       return _serverErrorMessage(status);
     }
 
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.sendTimeout) {
-      return 'Connection timeout. Check your internet connection.';
-    }
-    if (e.type == DioExceptionType.receiveTimeout) {
-      return 'Server timeout. Please try again.';
-    }
-    if (e.type == DioExceptionType.connectionError) {
-      return 'Network error. Check your connection.';
+    final isSecureConnectionIssue = e.type == DioExceptionType.badCertificate ||
+        messageLower.contains('certificate') ||
+        messageLower.contains('ssl') ||
+        messageLower.contains('tls') ||
+        messageLower.contains('handshake') ||
+        messageLower.contains('x509');
+
+    if (isSecureConnectionIssue) {
+      return 'The server certificate could not be verified. Please check your device date/time and try again. If the problem continues, the backend certificate may need to be renewed.';
     }
 
-    if (e.message != null && e.message!.isNotEmpty) {
-      return e.message!;
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.sendTimeout) {
+      return 'Connection timed out. The server may be slow or temporarily unavailable. Please try again.';
+    }
+    if (e.type == DioExceptionType.receiveTimeout) {
+      return 'The server took too long to respond. Please try again in a moment.';
+    }
+    if (e.type == DioExceptionType.connectionError) {
+      final isInternetIssue = messageLower.contains('failed host lookup') ||
+          messageLower.contains('network is unreachable') ||
+          messageLower.contains('connection refused') ||
+          messageLower.contains('no route to host') ||
+          messageLower.contains('socketexception') ||
+          messageLower.contains('name or service not known') ||
+          messageLower.contains('failed to connect to') ||
+          messageLower.contains('unable to resolve host') ||
+          messageLower.contains('timed out');
+
+      if (isInternetIssue) {
+        return 'Unable to reach the network. Please check your internet connection and try again.';
+      }
+
+      final isServerInterrupt = messageLower.contains('closed before full header was received') ||
+          messageLower.contains('connection reset by peer') ||
+          messageLower.contains('unexpected eof') ||
+          messageLower.contains('broken pipe') ||
+          messageLower.contains('handshake') ||
+          messageLower.contains('ssl') ||
+          messageLower.contains('tls') ||
+          messageLower.contains('certificate');
+
+      if (isServerInterrupt) {
+        return 'The server connection was interrupted. Please try again. If this keeps happening, the backend may be restarting or the SSL certificate may need attention.';
+      }
+
+      return 'The server could not be reached. Please try again in a moment.';
+    }
+
+    if (message.isNotEmpty) {
+      return message;
     }
   }
 

@@ -145,8 +145,16 @@ SIMPLE_JWT = {
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
 
-# CORS Configuration – allow requests from mobile app and Flutter emulator
-CORS_ALLOW_ALL_ORIGINS = False
+# CORS Configuration – allow requests from mobile app, Flutter web, and local dev servers.
+# Flutter web uses dynamically assigned localhost ports (for example http://localhost:53871),
+# so a fixed list is not sufficient for local development.
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\d+$",
+    r"^http://127\.0\.0\.1:\d+$",
+    r"^https://localhost:\d+$",
+    r"^https://127\.0\.0\.1:\d+$",
+]
 CORS_ALLOWED_ORIGINS = [
     "https://qrscanner-5qk4.onrender.com",
     "http://localhost:8000",
@@ -154,7 +162,7 @@ CORS_ALLOWED_ORIGINS = [
 ] if not DEBUG else []
 
 if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins in DEBUG mode
+    CORS_ALLOW_ALL_ORIGINS = True
 
 # Expose Authorization header so client can receive and use tokens
 CORS_EXPOSE_HEADERS = [

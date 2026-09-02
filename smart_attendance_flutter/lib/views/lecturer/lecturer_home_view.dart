@@ -221,7 +221,7 @@ class _LecturerDashboard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              Row(
+              const Row(
                 children: [
                   Expanded(
                     child: _StepCard(
@@ -231,7 +231,7 @@ class _LecturerDashboard extends StatelessWidget {
                       color: AppTheme.primary,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: _StepCard(
                       step: '2',
@@ -240,7 +240,7 @@ class _LecturerDashboard extends StatelessWidget {
                       color: AppTheme.accent,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: _StepCard(
                       step: '3',

@@ -123,11 +123,11 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                 color: Colors.white.withValues(alpha: 0.8),
                                 fontSize: 13)),
                         const SizedBox(height: 14),
-                        Wrap(
+                        const Wrap(
                           alignment: WrapAlignment.center,
                           spacing: 8,
                           runSpacing: 8,
-                          children: const [
+                          children: [
                             _BrandChip(label: 'QR Security'),
                             _BrandChip(label: 'Offline Sync'),
                             _BrandChip(label: 'Management Reports'),

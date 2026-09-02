@@ -22,12 +22,6 @@ class AnalyticsDashboardView extends StatelessWidget {
         ? 94.0
         : ((totalAttendance / (data.length * 26.0)) * 100).clamp(0.0, 100.0);
 
-    final trendSpots = data.asMap().entries.map((entry) {
-      final index = entry.key.toDouble();
-      final value = entry.value.attendanceCount.toDouble();
-      return FlSpot(index, value);
-    }).toList();
-
     final pieData = [
       _ChartSlice('Compliant', complianceRate, AppTheme.success),
       _ChartSlice('At risk', (100 - complianceRate).clamp(0.0, 100.0), AppTheme.warning),
@@ -132,10 +126,10 @@ class AnalyticsDashboardView extends StatelessWidget {
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
-                  gridData: FlGridData(show: false),
+                  gridData: const FlGridData(show: false),
                   borderData: FlBorderData(show: false),
                   titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
@@ -154,8 +148,8 @@ class AnalyticsDashboardView extends StatelessWidget {
                         reservedSize: 28,
                       ),
                     ),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
                   barTouchData: BarTouchData(enabled: false),
                   barGroups: data.asMap().entries.map((entry) {
@@ -324,7 +318,7 @@ class AnalyticsDashboardView extends StatelessWidget {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

@@ -73,7 +73,7 @@ class LecturerProfileView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            _ThemeToggleTile(),
+            const _ThemeToggleTile(),
             const SizedBox(height: 8),
 
             // Info
@@ -188,7 +188,7 @@ class _ThemeToggleTile extends StatelessWidget {
           Switch(
             value: isDark,
             onChanged: (_) => context.read<ThemeController>().toggleDarkMode(),
-            activeColor: AppTheme.primary,
+            activeThumbColor: AppTheme.primary,
           ),
         ],
       ),

@@ -5,7 +5,6 @@ import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_theme.dart';
 import '../../models/course_model.dart';
 import '../../services/course_service.dart';
-import '../management/management_dashboard_view.dart';
 import '../shared/animations/fade_slide_route.dart';
 import '../shared/widgets/staggered_fade_in.dart';
 import 'analytics_dashboard_view.dart';

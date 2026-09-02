@@ -7,7 +7,8 @@ class AppConstants {
   AppConstants._();
 
   // API
-  static const String baseUrl = 'https://qrattendance-q6g0.onrender.com/api/v1';
+  // Backend is mounted at /api/v1 in Django, so the app must include that prefix.
+  static const String baseUrl = 'https://qrscanner-5qk4.onrender.com/api/v1';
   static const String authBase = '$baseUrl/auth';
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 60);

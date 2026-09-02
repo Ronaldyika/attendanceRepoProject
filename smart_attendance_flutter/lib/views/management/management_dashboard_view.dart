@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/session_controller.dart';
 import '../../core/constants/app_theme.dart';
-import '../../models/session_model.dart';
 
 class ManagementDashboardView extends StatelessWidget {
   const ManagementDashboardView({super.key});
@@ -114,7 +113,7 @@ class ManagementDashboardView extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppTheme.divider),
             ),
-            child: Column(
+            child: const Column(
               children: [
                 Row(
                   children: [
@@ -126,7 +125,7 @@ class ManagementDashboardView extends StatelessWidget {
                         color: AppTheme.success,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Expanded(
                       child: _MiniStat(
                         icon: Icons.cloud_done_outlined,
@@ -137,7 +136,7 @@ class ManagementDashboardView extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -148,7 +147,7 @@ class ManagementDashboardView extends StatelessWidget {
                         color: AppTheme.warning,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Expanded(
                       child: _MiniStat(
                         icon: Icons.support_agent_outlined,
@@ -250,7 +249,7 @@ class ManagementDashboardView extends StatelessWidget {
                   ],
                 ),
               );
-            }).toList(),
+            }),
         ],
       ),
     );
