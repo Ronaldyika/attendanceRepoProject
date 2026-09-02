@@ -23,6 +23,15 @@ class _CreateSessionViewState extends State<CreateSessionView> {
   bool _isCreating = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<CourseController>().loadCourses();
+    });
+  }
+
+  @override
   void dispose() {
     _venueCtrl.dispose();
     _notesCtrl.dispose();

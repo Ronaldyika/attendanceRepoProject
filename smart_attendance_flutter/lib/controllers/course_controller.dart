@@ -41,9 +41,11 @@ class CourseController extends ChangeNotifier {
       code: code, title: title, lecturerId: lecturerId,
     );
     if (result.isSuccess) {
-      _courses.insert(0, result.data!);
-      notifyListeners();
-      return result.data;
+      _error = null;
+      final createdCourse = result.data!;
+      _courses.insert(0, createdCourse);
+      await loadCourses();
+      return createdCourse;
     }
     _error = result.error;
     notifyListeners();
