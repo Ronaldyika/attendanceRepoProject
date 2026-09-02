@@ -97,6 +97,20 @@ void main() {
       expect(service.deviceUuidCalls, 1);
     });
 
+    test('rejects empty or malformed credentials before making a request', () async {
+      final service = FakeAuthService();
+      final controller = AuthController(service: service);
+
+      final emptyResult = await controller.login('', '');
+      final invalidEmailResult = await controller.login('bad-email', 'password123');
+
+      expect(emptyResult, isFalse);
+      expect(invalidEmailResult, isFalse);
+      expect(controller.error, 'Please enter a valid email address.');
+      expect(service.loginCalls, 0);
+      expect(controller.status, AuthStatus.unauthenticated);
+    });
+
     test('captures the error and resets auth state when login fails', () async {
       final service = FakeAuthService(
         loginResult: const ApiResult.failure('Invalid credentials'),
@@ -149,6 +163,37 @@ void main() {
       expect(text, contains('timed out'));
       expect(text, isNot(contains('Check your internet connection')));
       expect(text, isNot(contains('No internet')));
+    });
+
+    test('rejects incomplete or invalid registration data before sending the request',
+        () async {
+      final service = FakeAuthService();
+      final controller = AuthController(service: service);
+
+      final invalidEmail = await controller.register(
+        email: 'bad-email',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        registrationNumber: 'UBa25EP188',
+        role: 'lecturer',
+        password: 'pass',
+        passwordConfirm: 'pass',
+      );
+
+      final shortPassword = await controller.register(
+        email: 'lecturer@civilsalt.com',
+        firstName: 'Jane',
+        lastName: 'Doe',
+        registrationNumber: 'UBa25EP188',
+        role: 'lecturer',
+        password: 'pass',
+        passwordConfirm: 'pass',
+      );
+
+      expect(invalidEmail, isFalse);
+      expect(shortPassword, isFalse);
+      expect(controller.error, 'Password must be at least 8 characters long.');
+      expect(service.registerCalls, 0);
     });
 
     test('marks registration successful when the service accepts the account',
