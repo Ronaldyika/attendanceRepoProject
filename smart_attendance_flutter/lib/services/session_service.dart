@@ -120,25 +120,30 @@ class SessionService {
   }
 
   Future<void> _cacheSession(SessionModel session) async {
-    await _db.insert('attendance_sessions', {
-      'id': session.id,
-      'course_id': session.courseId,
-      'course_code': session.courseCode,
-      'course_title': session.courseTitle,
-      'created_by': session.createdBy,
-      'lecturer_name': session.lecturerName,
-      'status': session.status,
-      'started_at': session.startedAt,
-      'expires_at': session.expiresAt,
-      'closed_at': session.closedAt,
-      'venue': session.venue,
-      'notes': session.notes,
-      'session_secret': session.sessionSecret,
-      'qr_payload': session.qrPayload,
-      'expiry_unix': session.expiryUnix,
-      'attendance_count': session.attendanceCount,
-      'synced_at': DateTime.now().toIso8601String(),
-    }, conflict: ConflictAlgorithm.replace);
+    try {
+      await _db.insert('attendance_sessions', {
+        'id': session.id,
+        'course_id': session.courseId,
+        'course_code': session.courseCode,
+        'course_title': session.courseTitle,
+        'created_by': session.createdBy,
+        'lecturer_name': session.lecturerName,
+        'status': session.status,
+        'started_at': session.startedAt,
+        'expires_at': session.expiresAt,
+        'closed_at': session.closedAt,
+        'venue': session.venue,
+        'notes': session.notes,
+        'session_secret': session.sessionSecret,
+        'qr_payload': session.qrPayload,
+        'expiry_unix': session.expiryUnix,
+        'attendance_count': session.attendanceCount,
+        'synced_at': DateTime.now().toIso8601String(),
+      }, conflict: ConflictAlgorithm.replace);
+    } catch (_) {
+      // Web may not have a sqflite database factory configured. The server
+      // response is still authoritative, so caching must not fail the action.
+    }
   }
 
   Future<List<SessionModel>> _getLocalSessions() async {
