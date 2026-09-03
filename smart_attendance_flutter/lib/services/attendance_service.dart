@@ -59,6 +59,7 @@ class AttendanceService {
       hmacSignature: record.hmacSignature,
       qrPayload: record.qrPayload,
       pendingSync: pendingSync,
+      syncStatus: pendingSync ? 'pending' : 'synced',
     );
     await _db.insert(
       'attendance_records',
@@ -156,21 +157,29 @@ class AttendanceService {
         'device_uuid': deviceUuid,
         'records': pending.map((r) => r.toSyncPayload()).toList(),
       });
-      final result = resp.data as Map<String, dynamic>;
+      final result = asStringMap(resp.data);
+      if (result == null) {
+        throw const FormatException('Sync response is not an object.');
+      }
       final now = DateTime.now().toIso8601String();
-      final accepted = result['accepted'] ?? pending.length;
-      final acceptedIds = (result['accepted_ids'] as List?)
-          ?.map((id) => id.toString())
-          .toSet();
-      final recordsToMark = acceptedIds != null
-          ? pending.where((record) => acceptedIds.contains(record.id)).toList()
-          : accepted == pending.length
-              ? pending
-              : <AttendanceRecordModel>[];
+        final accepted = _responseCount(result['accepted']);
+        final rejected = _responseCount(result['rejected']);
+        final duplicates = _responseCount(result['duplicates']);
+        final hasSummary = result.containsKey('accepted') ||
+          result.containsKey('rejected') ||
+          result.containsKey('duplicates');
+        final complete = !hasSummary ||
+            (rejected == 0 && accepted + duplicates >= pending.length);
+        final fullyRejected = rejected == pending.length && accepted == 0 && duplicates == 0;
+        final recordsToMark = complete || fullyRejected ? pending : <AttendanceRecordModel>[];
       for (final r in recordsToMark) {
         await _db.update(
           'attendance_records',
-          {'pending_sync': 0, 'synced_at': now},
+          {
+            'pending_sync': 0,
+            'synced_at': now,
+            'sync_status': fullyRejected ? 'rejected' : 'synced',
+          },
           where: 'id = ?',
           whereArgs: [r.id],
         );
@@ -212,6 +221,11 @@ class AttendanceService {
 
   int getPendingCount(List<AttendanceRecordModel> records) =>
       records.where((r) => r.pendingSync).length;
+
+  int _responseCount(dynamic value) {
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
 
   String _parseError(dynamic e) {
     if (e is DioException) {

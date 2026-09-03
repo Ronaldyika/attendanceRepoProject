@@ -85,7 +85,7 @@ class AttendanceHistoryView extends StatelessWidget {
                       _VertDivider(),
                       _SummaryItem(
                         label: 'Synced',
-                        value: '${records.where((r) => !r.pendingSync).length}',
+                        value: '${records.where((r) => r.syncStatus == 'synced').length}',
                         color: AppTheme.success,
                       ),
                       _VertDivider(),
@@ -160,9 +160,11 @@ class _RecordCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: record.pendingSync
-              ? AppTheme.warning.withValues(alpha: 0.3)
-              : AppTheme.divider,
+            color: record.syncStatus == 'rejected'
+              ? AppTheme.error.withValues(alpha: 0.3)
+              : record.pendingSync
+                ? AppTheme.warning.withValues(alpha: 0.3)
+                : AppTheme.divider,
         ),
       ),
       child: Row(
@@ -171,16 +173,24 @@ class _RecordCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: record.pendingSync
-                  ? AppTheme.warning.withValues(alpha: 0.1)
-                  : AppTheme.success.withValues(alpha: 0.1),
+                color: record.syncStatus == 'rejected'
+                  ? AppTheme.error.withValues(alpha: 0.1)
+                  : record.pendingSync
+                    ? AppTheme.warning.withValues(alpha: 0.1)
+                    : AppTheme.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              record.scanSource == 'offline'
-                  ? Icons.wifi_off
-                  : Icons.check_circle_outline,
-              color: record.pendingSync ? AppTheme.warning : AppTheme.success,
+                record.syncStatus == 'rejected'
+                  ? Icons.error_outline
+                  : record.scanSource == 'offline'
+                    ? Icons.wifi_off
+                    : Icons.check_circle_outline,
+                color: record.syncStatus == 'rejected'
+                  ? AppTheme.error
+                  : record.pendingSync
+                    ? AppTheme.warning
+                    : AppTheme.success,
               size: 22,
             ),
           ),
@@ -206,7 +216,7 @@ class _RecordCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              StatusBadge(status: record.pendingSync ? 'pending' : 'synced'),
+              StatusBadge(status: record.syncStatus),
               const SizedBox(height: 4),
               Text(
                 record.scanSource == 'offline' ? 'Offline' : 'Online',

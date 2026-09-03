@@ -10,6 +10,7 @@ class AttendanceRecordModel {
   final String? hmacSignature;
   final String? qrPayload;
   final bool pendingSync;
+  final String syncStatus;
 
   const AttendanceRecordModel({
     required this.id,
@@ -23,6 +24,7 @@ class AttendanceRecordModel {
     this.hmacSignature,
     this.qrPayload,
     this.pendingSync = true,
+    this.syncStatus = 'pending',
   });
 
   bool get isSynced => !pendingSync && syncedAt != null;
@@ -40,6 +42,10 @@ class AttendanceRecordModel {
         hmacSignature: json['hmac_signature'],
         qrPayload: json['qr_payload'],
         pendingSync: json['pending_sync'] == 1 || json['pending_sync'] == true,
+        syncStatus: json['sync_status'] ??
+          ((json['pending_sync'] == 1 || json['pending_sync'] == true)
+            ? 'pending'
+            : 'synced'),
       );
 
   factory AttendanceRecordModel.fromDb(Map<String, dynamic> row) =>
@@ -55,6 +61,8 @@ class AttendanceRecordModel {
         hmacSignature: row['hmac_signature'],
         qrPayload: row['qr_payload'],
         pendingSync: row['pending_sync'] == 1,
+        syncStatus: row['sync_status'] ??
+          (row['pending_sync'] == 1 ? 'pending' : 'synced'),
       );
 
   Map<String, dynamic> toDb() => {
@@ -69,6 +77,7 @@ class AttendanceRecordModel {
         'hmac_signature': hmacSignature,
         'qr_payload': qrPayload,
         'pending_sync': pendingSync ? 1 : 0,
+        'sync_status': syncStatus,
       };
 
   Map<String, dynamic> toSyncPayload() => {

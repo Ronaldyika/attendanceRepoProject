@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../core/constants/app_constants.dart';
 import '../models/attendance_record_model.dart';
 import '../models/session_model.dart';
 import '../services/attendance_service.dart';
@@ -24,6 +25,7 @@ class AttendanceController extends ChangeNotifier {
   AttendanceRecordModel? _lastScannedRecord;
   int _pendingCount = 0;
   StreamSubscription<bool>? _connectivitySub;
+  Timer? _syncRetryTimer;
 
   AttendanceScanState get scanState => _scanState;
   SyncState get syncState => _syncState;
@@ -39,6 +41,10 @@ class AttendanceController extends ChangeNotifier {
       if (online) {
         _syncPendingIfNeeded(studentId: studentId, deviceUuid: deviceUuid);
       }
+    });
+    _syncRetryTimer?.cancel();
+    _syncRetryTimer = Timer.periodic(AppConstants.syncRetryInterval, (_) {
+      _syncPendingIfNeeded(studentId: studentId, deviceUuid: deviceUuid);
     });
 
     await _refreshPendingCount(studentId);
@@ -138,7 +144,16 @@ class AttendanceController extends ChangeNotifier {
     if (result.isSuccess) {
       await loadRecords(studentId);
       _pendingCount = _records.where((record) => record.pendingSync).length;
-      _syncState = SyncState.synced;
+      final response = result.data ?? const <String, dynamic>{};
+      final rejected = _responseCount(response['rejected']);
+      if (rejected > 0 || _pendingCount > 0) {
+        _syncError = rejected > 0
+            ? '$rejected attendance record${rejected == 1 ? '' : 's'} were rejected by the server.'
+            : 'Some attendance records are still pending synchronization.';
+        _syncState = SyncState.error;
+      } else {
+        _syncState = SyncState.synced;
+      }
       notifyListeners();
       return result.data;
     } else {
@@ -159,7 +174,6 @@ class AttendanceController extends ChangeNotifier {
     required String studentId,
     required String deviceUuid,
   }) async {
-    if (_pendingCount <= 0) return;
     if (_syncState == SyncState.syncing) return;
 
     final online = await _connectivity.checkConnection();
@@ -183,6 +197,12 @@ class AttendanceController extends ChangeNotifier {
   @override
   void dispose() {
     _connectivitySub?.cancel();
+    _syncRetryTimer?.cancel();
     super.dispose();
+  }
+
+  int _responseCount(dynamic value) {
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 }

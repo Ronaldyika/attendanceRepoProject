@@ -24,14 +24,23 @@ class StudentHomeView extends StatefulWidget {
   State<StudentHomeView> createState() => _StudentHomeViewState();
 }
 
-class _StudentHomeViewState extends State<StudentHomeView> {
+class _StudentHomeViewState extends State<StudentHomeView>
+  with WidgetsBindingObserver {
   int _selectedIndex = 0;
   bool _isOnline = true;
   StreamSubscription<bool>? _connectivitySub;
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncPendingOnResume();
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthController>();
       final attCtrl = context.read<AttendanceController>();
@@ -56,8 +65,24 @@ class _StudentHomeViewState extends State<StudentHomeView> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _connectivitySub?.cancel();
     super.dispose();
+  }
+
+  Future<void> _syncPendingOnResume() async {
+    if (!mounted) return;
+    final auth = context.read<AuthController>();
+    final user = auth.user;
+    if (user == null) return;
+    final attendance = context.read<AttendanceController>();
+
+    if (await ConnectivityService().checkConnection() && mounted) {
+      await attendance.syncPending(
+            studentId: user.id,
+            deviceUuid: auth.deviceUuid ?? '',
+          );
+    }
   }
 
   @override
@@ -184,7 +209,7 @@ class _StudentDashboard extends StatelessWidget {
     final courses = context.watch<CourseController>().courses;
 
     final total = attCtrl.records.length;
-    final synced = attCtrl.records.where((r) => !r.pendingSync).length;
+    final synced = attCtrl.records.where((r) => r.syncStatus == 'synced').length;
     final pending = attCtrl.pendingCount;
 
     return CustomScrollView(
@@ -368,8 +393,19 @@ class _StudentDashboard extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Sync complete: ${result['accepted'] ?? 0} records uploaded.'),
-          backgroundColor: AppTheme.success,
+              'Sync complete: ${result['accepted'] ?? 0} accepted, '
+              '${result['duplicates'] ?? 0} duplicates, '
+              '${result['rejected'] ?? 0} rejected.'),
+          backgroundColor: (result['rejected'] ?? 0) > 0
+              ? AppTheme.warning
+              : AppTheme.success,
+        ),
+      );
+    } else if (context.mounted && attCtrl.syncError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(attCtrl.syncError!),
+          backgroundColor: AppTheme.error,
         ),
       );
     }
@@ -464,12 +500,12 @@ class _OfflineHeroCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const Row(
+          const Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _InfoPill(label: 'HMAC-SHA256', dark: true),
-              SizedBox(width: 8),
               _InfoPill(label: 'Device-bound', dark: true),
-              SizedBox(width: 8),
               _InfoPill(label: 'Auto-sync', dark: true),
             ],
           ),
@@ -612,14 +648,24 @@ class _RecentRecordTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: record.pendingSync
-                  ? AppTheme.warning.withValues(alpha: 0.1)
-                  : AppTheme.success.withValues(alpha: 0.1),
+                color: record.syncStatus == 'rejected'
+                  ? AppTheme.error.withValues(alpha: 0.1)
+                  : record.pendingSync
+                    ? AppTheme.warning.withValues(alpha: 0.1)
+                    : AppTheme.success.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              record.pendingSync ? Icons.cloud_upload_outlined : Icons.check_circle_outline,
-              color: record.pendingSync ? AppTheme.warning : AppTheme.success,
+                record.syncStatus == 'rejected'
+                  ? Icons.error_outline
+                  : record.pendingSync
+                    ? Icons.cloud_upload_outlined
+                    : Icons.check_circle_outline,
+                color: record.syncStatus == 'rejected'
+                  ? AppTheme.error
+                  : record.pendingSync
+                    ? AppTheme.warning
+                    : AppTheme.success,
               size: 20,
             ),
           ),
@@ -634,10 +680,16 @@ class _RecentRecordTile extends StatelessWidget {
                         fontSize: 13,
                         color: AppTheme.textPrimary)),
                 Text(
-                    record.pendingSync ? 'Pending sync' : 'Synced',
+                    record.syncStatus == 'rejected'
+                      ? 'Rejected by server'
+                      : record.pendingSync
+                        ? 'Pending sync'
+                        : 'Synced',
                     style: TextStyle(
                         fontSize: 11,
-                        color: record.pendingSync
+                        color: record.syncStatus == 'rejected'
+                          ? AppTheme.error
+                          : record.pendingSync
                             ? AppTheme.warning
                             : AppTheme.success)),
               ],

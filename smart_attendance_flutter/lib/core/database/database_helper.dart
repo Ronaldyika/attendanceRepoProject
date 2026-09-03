@@ -91,6 +91,7 @@ class DatabaseHelper {
         hmac_signature TEXT,
         qr_payload TEXT,
         pending_sync INTEGER NOT NULL DEFAULT 1,
+        sync_status TEXT NOT NULL DEFAULT 'pending',
         created_at TEXT DEFAULT (datetime('now')),
         UNIQUE(student_id, session_id, device_uuid)
       )
@@ -108,7 +109,16 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX idx_records_session ON attendance_records(session_id)');
   }
 
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {}
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute(
+        "ALTER TABLE attendance_records ADD COLUMN sync_status TEXT NOT NULL DEFAULT 'pending'",
+      );
+      await db.execute(
+        "UPDATE attendance_records SET sync_status = 'synced' WHERE pending_sync = 0",
+      );
+    }
+  }
 
   // ── Generic helpers ──────────────────────────────────────────────────────
   Future<int> insert(String table, Map<String, dynamic> data,

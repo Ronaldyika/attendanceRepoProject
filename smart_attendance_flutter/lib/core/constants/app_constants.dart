@@ -20,7 +20,7 @@ class AppConstants {
 
   // Local DB
   static const String dbName = 'smart_attendance.db';
-  static const int dbVersion = 1;
+  static const int dbVersion = 2;
 
   // Secure storage keys
   static const String kAccessToken = 'access_token';

@@ -13,6 +13,7 @@ class StatusBadge extends StatelessWidget {
       'expired' => (AppTheme.warning, const Color(0xFFFFF8E1), 'Expired'),
       'synced' => (AppTheme.success, const Color(0xFFE8F5E9), 'Synced'),
       'pending' => (AppTheme.warning, const Color(0xFFFFF8E1), 'Pending'),
+      'rejected' => (AppTheme.error, const Color(0xFFFFEBEE), 'Rejected'),
       _ => (AppTheme.primary, AppTheme.primaryLight, status),
     };
 
