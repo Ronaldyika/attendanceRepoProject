@@ -83,7 +83,7 @@ class AttendanceController extends ChangeNotifier {
   }
 
   Future<bool> scanQrOffline({
-    required SessionModel session,
+    SessionModel? session,
     required String qrPayload,
     required String deviceUuid,
     required String studentId,

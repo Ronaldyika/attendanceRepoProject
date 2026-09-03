@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
-import '../core/constants/app_constants.dart';
 import '../core/database/database_helper.dart';
 import '../core/network/api_client.dart';
 import '../core/network/api_result.dart';
@@ -70,7 +69,7 @@ class AttendanceService {
 
   // ── Offline scan (store locally) ─────────────────────────────────────────
   Future<AttendanceScanResult> recordOfflineScan({
-    required SessionModel session,
+    SessionModel? session,
     required String qrPayload,
     required String deviceUuid,
     required String studentId,
@@ -85,30 +84,19 @@ class AttendanceService {
       );
     }
 
-    // 1–3. Verify HMAC & expiry
-    if (session.sessionSecret == null) {
-      return AttendanceScanResult.failure('Session secret not available offline.');
+    // Offline devices may not have the session secret. Keep the signed QR
+    // payload and let the server validate it when the record is synced.
+    final parsed = QrUtils.parseQrPayload(qrPayload);
+    if (parsed == null) {
+      return AttendanceScanResult.failure('Invalid QR code format.');
     }
-    final verify = QrUtils.verifyQrPayload(
-      qrPayload,
-      session.sessionSecret!,
-      clockSkewTolerance: AppConstants.clockSkewToleranceSeconds,
-    );
-    if (!verify.ok) {
-      return AttendanceScanResult.failure(
-        verify.reason == 'expired'
-            ? 'QR code has expired. Ask your lecturer to refresh it.'
-            : verify.reason == 'invalid_hmac'
-                ? 'Invalid QR code. This code may have been tampered with.'
-                : 'Invalid QR code format.',
-      );
-    }
+    final sessionId = session?.id ?? parsed.sessionId;
 
     // 2. Duplicate check (local)
     final existing = await _db.query(
       'attendance_records',
       where: 'student_id = ? AND session_id = ? AND device_uuid = ?',
-      whereArgs: [studentId, session.id, deviceUuid],
+      whereArgs: [studentId, sessionId, deviceUuid],
     );
     if (existing.isNotEmpty) {
       return AttendanceScanResult.duplicate();
@@ -117,18 +105,18 @@ class AttendanceService {
     // 3. Write to SQLite
     final now = DateTime.now().toUtc();
     final idemKey =
-        '$deviceUuid|${session.id}|${now.millisecondsSinceEpoch}';
+        '$deviceUuid|$sessionId|${now.millisecondsSinceEpoch}';
     final id = const Uuid().v4();
 
     final record = AttendanceRecordModel(
       id: id,
       studentId: studentId,
-      sessionId: session.id,
+      sessionId: sessionId,
       deviceUuid: deviceUuid,
       scanSource: 'offline',
       scannedAt: now.toIso8601String(),
       idempotencyKey: idemKey,
-      hmacSignature: verify.parsed?.signature,
+      hmacSignature: parsed.signature,
       qrPayload: qrPayload,
       pendingSync: true,
     );
@@ -171,15 +159,21 @@ class AttendanceService {
       final result = resp.data as Map<String, dynamic>;
       final now = DateTime.now().toIso8601String();
       final accepted = result['accepted'] ?? pending.length;
-      if (accepted is int && accepted > 0) {
-        for (final r in pending) {
-          await _db.update(
-            'attendance_records',
-            {'pending_sync': 0, 'synced_at': now},
-            where: 'id = ?',
-            whereArgs: [r.id],
-          );
-        }
+      final acceptedIds = (result['accepted_ids'] as List?)
+          ?.map((id) => id.toString())
+          .toSet();
+      final recordsToMark = acceptedIds != null
+          ? pending.where((record) => acceptedIds.contains(record.id)).toList()
+          : accepted == pending.length
+              ? pending
+              : <AttendanceRecordModel>[];
+      for (final r in recordsToMark) {
+        await _db.update(
+          'attendance_records',
+          {'pending_sync': 0, 'synced_at': now},
+          where: 'id = ?',
+          whereArgs: [r.id],
+        );
       }
       return ApiResult.success(result);
     } catch (e) {

@@ -73,26 +73,15 @@ class _ScanViewState extends State<ScanView>
       );
       errorMsg = attCtrl.scanError;
     } else {
-      var session = await _sessionService.getLocalSession(parsed.sessionId);
-
-      if (session == null) {
-        errorMsg =
-            'Session is not cached locally. Connect to the internet once to download scan keys for offline attendance.';
-      } else {
-        if (session.sessionSecret == null) {
-          errorMsg =
-              'Session secret unavailable for offline scanning. Please refresh the lecture session online.';
-        } else {
-          success = await attCtrl.scanQrOffline(
-            session: session,
-            qrPayload: raw,
-            deviceUuid: deviceUuid,
-            studentId: studentId,
-            registeredDeviceUuid: auth.user!.deviceUuid,
-          );
-          errorMsg = attCtrl.scanError;
-        }
-      }
+      final session = await _sessionService.getLocalSession(parsed.sessionId);
+      success = await attCtrl.scanQrOffline(
+        session: session,
+        qrPayload: raw,
+        deviceUuid: deviceUuid,
+        studentId: studentId,
+        registeredDeviceUuid: auth.user!.deviceUuid,
+      );
+      errorMsg = attCtrl.scanError;
     }
 
     if (!mounted) return;
