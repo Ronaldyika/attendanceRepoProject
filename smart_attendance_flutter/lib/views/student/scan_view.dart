@@ -72,22 +72,13 @@ class _ScanViewState extends State<ScanView>
         studentId: studentId,
       );
       errorMsg = attCtrl.scanError;
-    }
-
-    if (!success) {
+    } else {
       var session = await _sessionService.getLocalSession(parsed.sessionId);
-      if (session == null && isOnline) {
-        session = await _sessionService.fetchAndCacheSession(parsed.sessionId);
-      }
 
       if (session == null) {
         errorMsg =
             'Session is not cached locally. Connect to the internet once to download scan keys for offline attendance.';
       } else {
-        if (session.sessionSecret == null && isOnline) {
-          session = await _sessionService.fetchAndCacheSession(parsed.sessionId) ?? session;
-        }
-
         if (session.sessionSecret == null) {
           errorMsg =
               'Session secret unavailable for offline scanning. Please refresh the lecture session online.';

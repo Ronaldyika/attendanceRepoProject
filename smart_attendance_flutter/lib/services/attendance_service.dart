@@ -29,8 +29,12 @@ class AttendanceService {
         'device_uuid': deviceUuid,
         'scanned_at': now,
       });
-      final record = AttendanceRecordModel.fromJson(
-          resp.data['record'] as Map<String, dynamic>);
+      final responseData = asStringMap(resp.data);
+      final recordData = asStringMap(responseData?['record']) ?? responseData;
+      if (recordData == null) {
+        throw const FormatException('Attendance scan response is not an object.');
+      }
+      final record = AttendanceRecordModel.fromJson(recordData);
       await _persistRecordLocally(record, pendingSync: false);
       return ApiResult.success(record);
     } catch (e) {
